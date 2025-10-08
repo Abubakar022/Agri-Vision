@@ -1,5 +1,6 @@
 import 'dart:ffi';
 
+import 'package:agri_vision/src/presentation/screens/flow/user_Information.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -22,7 +23,7 @@ class OnboardingController extends GetxController {
   void nextPage() {
     if (currentPageIndex.value >= 2) {
       // Remove all previous routes to prevent going back
-      //Get.offAll(() => SignIn());
+      Get.offAll(() => getUserInformation());
     } else {
       var page = currentPageIndex.value + 1;
       pageController.jumpToPage(page);
@@ -30,6 +31,6 @@ class OnboardingController extends GetxController {
   }
 
   void skipPage() {
-  //  Get.offAll(() => SignIn());
+   Get.offAll(() => getUserInformation());
   }
 }

@@ -1,5 +1,8 @@
 import 'package:agri_vision/src/presentation/AppConstant/Colors.dart';
 import 'package:agri_vision/src/presentation/controllers/onBoarding_Controller.dart';
+import 'package:agri_vision/src/presentation/screens/OnBoarding_Pages/page1.dart';
+import 'package:agri_vision/src/presentation/screens/OnBoarding_Pages/page2.dart';
+import 'package:agri_vision/src/presentation/screens/OnBoarding_Pages/page3.dart';
 import 'package:flutter/material.dart';
 
 import 'package:google_fonts/google_fonts.dart';
@@ -8,10 +11,8 @@ import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 //import 'package:iconsax/iconsax.dart';
 import 'package:get/get.dart';
 
-
 class OnboardingScreen extends StatelessWidget {
   const OnboardingScreen({super.key});
-
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +27,9 @@ class OnboardingScreen extends StatelessWidget {
             controller: controller.pageController,
             onPageChanged: controller.updatePageIndicator,
             children: [
-            
+              page1(),
+              page2(),
+              page3(),
             ],
           ),
           Positioned(
@@ -37,39 +40,59 @@ class OnboardingScreen extends StatelessWidget {
                   controller.skipPage();
                 },
                 child: Text(
-                  'Skip',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w600),
+                  'چھوڑیں',
+                   style: GoogleFonts.vazirmatn(
+                              color: Appcolor.green,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 17,
+                              
+                            ),
                 )),
           ),
           Positioned(
-              bottom: 40,
-              left: 15,
-              child: SmoothPageIndicator(
-                  controller: controller.pageController,
-                  onDotClicked: controller.dotNavigation,
-                  count: 3,
-                  effect: ExpandingDotsEffect(
-                      activeDotColor: Appcolor.blue, dotHeight: 10))),
-          Positioned(
-              bottom: 25,
-              right: 8,
-              child: ElevatedButton(
-                  onPressed: () {
-                    controller.nextPage();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    shape: CircleBorder(),
-                    padding: EdgeInsets.all(17),
-                  //  backgroundColor: Appcolor.blue,
-                    iconColor: Colors.white,
-                  ), 
-                  child:null
-                 //child: Icon(Iconsax.arrow_right_3)
-                 
-                 ))
+              bottom: 200,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: SmoothPageIndicator(
+                    controller: controller.pageController,
+                    onDotClicked: controller.dotNavigation,
+                    count: 3,
+                    effect: ExpandingDotsEffect(
+                        activeDotColor: Appcolor.green, dotHeight: 10)),
+              )),
+         Positioned(
+  bottom: 130,
+  left: 0,
+  right: 0,
+  child: Center(
+    child: ElevatedButton.icon(
+      onPressed: () {
+        controller.nextPage();
+      },
+      
+      label: Text(
+        'آگے بڑھیں',
+        style: GoogleFonts.vazirmatn(
+                              color: Colors.white,
+                              fontWeight: FontWeight.normal,
+                              fontSize: width * 0.05,
+                              
+                            ),
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Appcolor.green,
+        padding: EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(30),
+        ),
+        elevation: 6,
+        shadowColor: Appcolor.green.withOpacity(0.4),
+      ),
+    ),
+  ),
+)
+
         ],
       ),
     );

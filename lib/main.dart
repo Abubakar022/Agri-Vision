@@ -1,4 +1,5 @@
 import 'package:agri_vision/src/presentation/screens/Drone_Module/DroneDashboardScreen.dart';
+import 'package:agri_vision/src/presentation/screens/flow/on_Boarding.dart';
 import 'package:agri_vision/src/presentation/screens/flow/splash_Screen.dart';
 import 'package:flutter/material.dart';
 
@@ -19,7 +20,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: SplashScreen(),
+      home: OnboardingScreen(),
     );
   }
 }
