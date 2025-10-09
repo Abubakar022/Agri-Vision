@@ -24,7 +24,7 @@ class page1 extends StatelessWidget {
                             textAlign: TextAlign.right,
                             style: GoogleFonts.vazirmatn(
                               color: Colors.black,
-                              fontWeight: FontWeight.normal,
+                              fontWeight: FontWeight.w700,
                               fontSize: width * 0.08,
                               
                             ),
@@ -40,7 +40,8 @@ class page1 extends StatelessWidget {
                               
                             ),
                           ),
-                           Image.asset("assets/images/onboard1.png",height: height*0.5,width: width*0.7, alignment: Alignment.center,fit: BoxFit.contain,)
+                          Aspace.spaceVertical(5),
+                           Image.asset("assets/images/onboard1.png",height: height*0.4,width: width*0.7, alignment: Alignment.center,fit: BoxFit.cover,)
            
                         
       

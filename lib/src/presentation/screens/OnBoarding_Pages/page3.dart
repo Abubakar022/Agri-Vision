@@ -24,7 +24,7 @@ class page3 extends StatelessWidget {
                             textAlign: TextAlign.right,
                             style: GoogleFonts.vazirmatn(
                               color: Colors.black,
-                              fontWeight: FontWeight.normal,
+                              fontWeight: FontWeight.w700,
                               fontSize: width * 0.08,
                               
                             ),
