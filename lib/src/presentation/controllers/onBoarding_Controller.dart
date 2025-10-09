@@ -23,7 +23,7 @@ class OnboardingController extends GetxController {
   void nextPage() {
     if (currentPageIndex.value >= 2) {
       // Remove all previous routes to prevent going back
-      Get.offAll(() => getUserInformation());
+      Get.offAll(() => RegisterPage());
     } else {
       var page = currentPageIndex.value + 1;
       pageController.jumpToPage(page);
@@ -31,6 +31,6 @@ class OnboardingController extends GetxController {
   }
 
   void skipPage() {
-   Get.offAll(() => getUserInformation());
+   Get.offAll(() => RegisterPage());
   }
 }
