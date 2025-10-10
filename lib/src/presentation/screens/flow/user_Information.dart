@@ -50,7 +50,7 @@ class _UserInformationState extends State<UserInformation> {
                         style: TextStyle(
                           fontSize: 26,
                           fontWeight: FontWeight.bold,
-                          color: Appcolor.green,
+                          color: Colors.white,
                           shadows: [
                             Shadow(
                               blurRadius: 10,
