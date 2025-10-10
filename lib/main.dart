@@ -1,3 +1,4 @@
+import 'package:agri_vision/src/presentation/screens/Detection_Module/CropScanScreen.dart';
 import 'package:agri_vision/src/presentation/screens/Drone_Module/DroneDashboardScreen.dart';
 import 'package:agri_vision/src/presentation/screens/flow/on_Boarding.dart';
 import 'package:agri_vision/src/presentation/screens/flow/otp_verify_page.dart';
@@ -25,7 +26,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: OtpVerifyPage(name: '657', phone: '545', verificationId: '434',),
+      home: CropScanScreen(),
     );
   }
 }
