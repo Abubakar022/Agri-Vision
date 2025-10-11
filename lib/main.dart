@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:agri_vision/src/presentation/screens/Detection_Module/CropScanScreen.dart';
 import 'package:agri_vision/src/presentation/screens/Detection_Module/resultScreen.dart';
+import 'package:agri_vision/src/presentation/screens/Drone_Module/DroneBookingConfirmationScreen.dart';
+import 'package:agri_vision/src/presentation/screens/Drone_Module/DroneBookingScreen.dart';
 import 'package:agri_vision/src/presentation/screens/Drone_Module/DroneDashboardScreen.dart';
 import 'package:agri_vision/src/presentation/screens/flow/on_Boarding.dart';
 import 'package:agri_vision/src/presentation/screens/flow/otp_verify_page.dart';
@@ -30,7 +32,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: DroneServiceScreen(),
+      home: OrderFinalPage(),
     //   home: DetectionResultScreen(
     //   imageFile: File('assets/images/scan.jpeg'),
     //   diseaseName: "پتوں کا زنگ",
