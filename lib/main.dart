@@ -6,6 +6,7 @@ import 'package:agri_vision/src/presentation/screens/Drone_Module/DroneBookingCo
 import 'package:agri_vision/src/presentation/screens/Drone_Module/DroneBookingHistoryScreen.dart';
 import 'package:agri_vision/src/presentation/screens/Drone_Module/DroneBookingScreen.dart';
 import 'package:agri_vision/src/presentation/screens/Drone_Module/DroneDashboardScreen.dart';
+import 'package:agri_vision/src/presentation/screens/flow/manage_flow.dart';
 import 'package:agri_vision/src/presentation/screens/flow/on_Boarding.dart';
 import 'package:agri_vision/src/presentation/screens/flow/otp_verify_page.dart';
 import 'package:agri_vision/src/presentation/screens/flow/splash_Screen.dart';
@@ -33,7 +34,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: OrderHistoryPage(),
+      home: SplashController(),
     //   home: DetectionResultScreen(
     //   imageFile: File('assets/images/scan.jpeg'),
     //   diseaseName: "پتوں کا زنگ",

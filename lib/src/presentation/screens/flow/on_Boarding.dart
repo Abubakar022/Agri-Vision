@@ -12,10 +12,12 @@ import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:get/get.dart';
 
 class OnboardingScreen extends StatelessWidget {
-  const OnboardingScreen({super.key});
+  final VoidCallback onFinish;
+  const OnboardingScreen({super.key, required this.onFinish});
 
   @override
   Widget build(BuildContext context) {
+    
     final controller = Get.put(OnboardingController());
     var size = MediaQuery.of(context).size;
     var height = size.height;
