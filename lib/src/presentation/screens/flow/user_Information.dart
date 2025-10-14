@@ -1,5 +1,7 @@
 import 'package:agri_vision/src/presentation/AppConstant/Colors.dart';
+import 'package:agri_vision/src/presentation/screens/flow/otp_verify_page.dart';
 import 'package:agri_vision/src/presentation/screens/flow/policy.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
@@ -174,16 +176,46 @@ Row(
                             elevation: 6,
                             shadowColor: Colors.black54,
                           ),
-                          onPressed: () {
-                            if (_formKey.currentState!.validate()) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content:
-                                      Text('فارم کامیابی سے جمع کر دیا گیا'),
-                                ),
-                              );
-                            }
-                          },
+                         onPressed: () async {
+  if (_formKey.currentState!.validate()) {
+    String phone = '+92${_phoneController.text.trim()}';
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('OTP بھیجا جا رہا ہے...')),
+    );
+
+    try {
+      await FirebaseAuth.instance.verifyPhoneNumber(
+        phoneNumber: phone,
+        verificationCompleted: (PhoneAuthCredential credential) {},
+        verificationFailed: (FirebaseAuthException e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('OTP بھیجنے میں ناکامی: ${e.message}')),
+          );
+        },
+        codeSent: (String verificationId, int? resendToken) {
+          // Navigate to OTP verify screen
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => OtpVerifyPage(
+                name: _nameController.text.trim(),
+                phone: _phoneController.text.trim(),
+                verificationId: verificationId,
+              ),
+            ),
+          );
+        },
+        codeAutoRetrievalTimeout: (String verificationId) {},
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('خرابی: $e')),
+      );
+    }
+  }
+},
+
                           child: const Text(
                             'جمع کریں',
                             style: TextStyle(

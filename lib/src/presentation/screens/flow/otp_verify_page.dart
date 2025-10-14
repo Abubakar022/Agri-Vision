@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:agri_vision/src/presentation/screens/Detection_Module/CropScanScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
@@ -33,30 +34,61 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
     }
 
     setState(() => _isLoading = true);
+
     try {
-      // Verify with Firebase
+      // ✅ Step 1: Verify OTP with Firebase
       final cred = PhoneAuthProvider.credential(
         verificationId: widget.verificationId,
         smsCode: _otpController.text.trim(),
       );
-
       await FirebaseAuth.instance.signInWithCredential(cred);
 
-      // Save user info to backend
-      final url = Uri.parse('http://localhost:3000/api/save-user');
+      // ✅ Step 2: Send verified data to backend
+      final url = Uri.parse('http://10.0.2.2:3000/api/save-user'); // change for your setup
       final resp = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'name': widget.name, 'phone': widget.phone}),
+        body: jsonEncode({
+          'fullName': widget.name,
+          'phone': widget.phone,
+          'verified': true,
+        }),
       );
 
-      final data = jsonDecode(resp.body);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(data['message'] ?? 'تصدیق کامیاب رہی!')),
-      );
+     if (resp.statusCode == 200) {
+  final data = jsonDecode(resp.body);
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text(data['message'] ?? 'تصدیق کامیاب رہی!')),
+  );
+
+  // ✅ Navigate to CropScanScreen
+  Future.delayed(const Duration(seconds: 1), () {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const CropScanScreen(),
+      ),
+    );
+  });
+}
+ else {
+        final data = jsonDecode(resp.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(data['message'] ?? 'ڈیٹا محفوظ کرنے میں مسئلہ')),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      String message = 'OTP غلط ہے یا ختم ہو چکا ہے';
+      if (e.code == 'invalid-verification-code') {
+        message = 'غلط OTP درج کیا گیا';
+      } else if (e.code == 'session-expired') {
+        message = 'OTP کی مدت ختم ہو گئی ہے، دوبارہ کوشش کریں';
+      }
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('OTP غلط ہے یا ختم ہو چکا ہے')),
+        SnackBar(content: Text('مسئلہ پیش آیا: $e')),
       );
     } finally {
       setState(() => _isLoading = false);
@@ -71,16 +103,9 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
         body: Stack(
           fit: StackFit.expand,
           children: [
-            // 🌾 Background image
-            Image.asset(
-              'assets/images/otp.jpeg',
-              fit: BoxFit.cover,
-            ),
-
-            // Dark overlay
+            Image.asset('assets/images/otp.jpeg', fit: BoxFit.cover),
             Container(color: Colors.black.withAlpha(50)),
 
-            // Foreground content
             Center(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -92,7 +117,7 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
                       style: TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white ,
+                        color: Colors.white,
                         shadows: [
                           Shadow(
                             blurRadius: 10,
@@ -103,8 +128,6 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
                       ),
                     ),
                     const SizedBox(height: 30),
-
-                    // 🔸 OTP Input
                     TextField(
                       controller: _otpController,
                       keyboardType: TextInputType.number,
@@ -116,10 +139,7 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
                       ),
                       decoration: InputDecoration(
                         labelText: 'OTP درج کریں',
-                        labelStyle: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 16,
-                        ),
+                        labelStyle: const TextStyle(color: Colors.white70, fontSize: 16),
                         filled: true,
                         fillColor: Colors.white.withAlpha(50),
                         border: OutlineInputBorder(
@@ -132,10 +152,8 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 30),
 
-                    // 🔹 Verify Button
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -171,26 +189,17 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
 
                     const SizedBox(height: 20),
 
-                    // 🔹 OTP resend message + clickable bold resend text
                     RichText(
                       textAlign: TextAlign.center,
                       text: TextSpan(
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.white70,
-                          fontFamily: 'Roboto',
-                        ),
+                        style: const TextStyle(fontSize: 14, color: Colors.white70),
                         children: [
-                          const TextSpan(
-                            text: "اگر آپ کو OTP موصول نہیں ہوا، ",
-                          ),
+                          const TextSpan(text: "اگر آپ کو OTP موصول نہیں ہوا، "),
                           WidgetSpan(
                             child: GestureDetector(
                               onTap: () {
-                                // 🟢 TODO: Call resend OTP function here
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content: Text('OTP دوبارہ بھیج دیا گیا')),
+                                  const SnackBar(content: Text('OTP دوبارہ بھیج دیا گیا')),
                                 );
                               },
                               child: const Text(
@@ -203,9 +212,7 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
                               ),
                             ),
                           ),
-                          const TextSpan(
-                            text: " پر کلک کریں۔",
-                          ),
+                          const TextSpan(text: " پر کلک کریں۔"),
                         ],
                       ),
                     ),

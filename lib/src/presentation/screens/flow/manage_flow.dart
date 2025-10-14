@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:agri_vision/src/presentation/screens/Detection_Module/CropScanScreen.dart';
 import 'package:agri_vision/src/presentation/screens/flow/on_Boarding.dart';
 import 'package:agri_vision/src/presentation/screens/flow/splash_Screen.dart';
+import 'package:agri_vision/src/presentation/screens/flow/user_Information.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -24,29 +25,39 @@ class _SplashControllerState extends State<SplashController> {
 
     final prefs = await SharedPreferences.getInstance();
     final hasSeenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
+    final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
 
     if (!mounted) return;
 
-    if (hasSeenOnboarding) {
+    if (isLoggedIn) {
+      // ✅ User already logged in → Direct Dashboard
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const CropScanScreen()),
       );
-    } else {
+    } else if (hasSeenOnboarding) {
+      // ✅ Onboarding done but not logged in → Go to OTP / login flow
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => OnboardingScreen(
-          onFinish: () async {
-            final prefs = await SharedPreferences.getInstance();
-            await prefs.setBool('hasSeenOnboarding', true);
-            if (mounted) {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (_) => const CropScanScreen()),
-              );
-            }
-          },
-        )),
+        MaterialPageRoute(builder: (_) => const UserInformation()),
+      );
+    } else {
+      // ✅ First time → Show onboarding
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => OnboardingScreen(
+            onFinish: () async {
+              await prefs.setBool('hasSeenOnboarding', true);
+              if (mounted) {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const UserInformation()),
+                );
+              }
+            },
+          ),
+        ),
       );
     }
   }

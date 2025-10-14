@@ -1,11 +1,15 @@
 import 'dart:io';
+import 'package:agri_vision/src/presentation/screens/Detection_Module/resultScreen.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 
 class CropScanScreen extends StatelessWidget {
   const CropScanScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    File? _selectedImage;
     String username = "ابو بکر";
     File? selectedImage; // dynamically filled later
 
@@ -85,7 +89,7 @@ class CropScanScreen extends StatelessWidget {
                   children: [
                     ElevatedButton.icon(
                       onPressed: () {
-                        // TODO: implement camera picker
+                        Get.to(() => DetectionResultScreen( imageFile: File('assets/images/scan.jpeg'), diseaseName: "پتوں کا زنگ",description: "یہ بیماری عام طور پر گندم کے پتوں پر زرد دھبے پیدا کرتی ہے۔", recommendation: "زرعی ماہر سے مشورہ کریں اور تجویز کردہ اسپرے استعمال کریں۔",));
                       },
                       icon: const Icon(Icons.camera_alt, color: Colors.white),
                       label: const Text(
@@ -103,7 +107,7 @@ class CropScanScreen extends StatelessWidget {
                     ),
                     ElevatedButton.icon(
                       onPressed: () {
-                        // TODO: implement gallery picker
+                        Get.to(() => DetectionResultScreen( imageFile: File('assets/images/scan.jpeg'), diseaseName: "پتوں کا زنگ",description: "یہ بیماری عام طور پر گندم کے پتوں پر زرد دھبے پیدا کرتی ہے۔", recommendation: "زرعی ماہر سے مشورہ کریں اور تجویز کردہ اسپرے استعمال کریں۔",));
                       },
                       icon: const Icon(Icons.photo, color: Colors.white),
                       label: const Text(
