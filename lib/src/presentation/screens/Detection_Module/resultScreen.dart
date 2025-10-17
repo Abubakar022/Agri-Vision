@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 class DetectionResultScreen extends StatelessWidget {
-  final File imageFile;
+  final String imageFile;
   final String diseaseName;
   final String description;
   final String recommendation;
@@ -62,7 +62,7 @@ class DetectionResultScreen extends StatelessWidget {
                       children: [
                         ClipRRect(
                           borderRadius: BorderRadius.circular(16),
-                          child: Image.file(
+                          child: Image.asset(
                             imageFile,
                             fit: BoxFit.cover,
                             width: double.infinity,

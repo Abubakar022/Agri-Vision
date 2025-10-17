@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:agri_vision/src/presentation/screens/Detection_Module/CropScanScreen.dart';
+import 'package:agri_vision/src/presentation/screens/Navigation/navigation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
@@ -67,7 +68,7 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (_) => const CropScanScreen(),
+        builder: (_) => const HomeNavigation(),
       ),
     );
   });

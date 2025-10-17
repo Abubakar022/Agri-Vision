@@ -1,4 +1,7 @@
+import 'package:agri_vision/src/presentation/screens/Drone_Module/DroneBookingConfirmationScreen.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 
 class DroneBookingScreen extends StatefulWidget {
   const DroneBookingScreen({super.key});
@@ -122,7 +125,9 @@ class _DroneBookingScreenState extends State<DroneBookingScreen> {
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton.icon(
-                              onPressed: () {},
+                              onPressed: () {
+                                Get.to(() =>  OrderFinalPage());
+                              },
                               icon: const Icon(Icons.air, color: Colors.white),
                               label: const Text(
                                 "بکنگ جمع کریں",

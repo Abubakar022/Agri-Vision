@@ -1,4 +1,7 @@
+import 'package:agri_vision/src/presentation/screens/Drone_Module/DroneBookingScreen.dart';
+import 'package:agri_vision/src/presentation/screens/Drone_Module/DroneBookingHistoryScreen.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class DroneServiceScreen extends StatelessWidget {
   const DroneServiceScreen({super.key});
@@ -8,11 +11,11 @@ class DroneServiceScreen extends StatelessWidget {
     final double safeAreaTop = MediaQuery.of(context).padding.top;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF8E3), // soft wheat background like other pages
+      backgroundColor: const Color(0xFFFDF8E3),
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // 🌾 --- Top Image Section with rounded corners ---
+            // 🌾 --- Top Image Section ---
             Container(
               margin: EdgeInsets.fromLTRB(16, safeAreaTop + 16, 16, 0),
               height: 220,
@@ -108,7 +111,38 @@ class DroneServiceScreen extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 40),
+            const SizedBox(height: 30),
+
+            // 🕒 --- Order History Button (NEW) ---
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Get.to(() => const OrderHistoryPage());
+                  },
+                  icon: const Icon(Icons.history, color: Color(0xFF02A96C)),
+                  label: const Text(
+                    'آرڈر ہسٹری',
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Color(0xFF02A96C),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFF02A96C), width: 1.5),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 25),
 
             // 🚁 --- Booking Button ---
             Padding(
@@ -118,7 +152,7 @@ class DroneServiceScreen extends StatelessWidget {
                 height: 55,
                 child: ElevatedButton(
                   onPressed: () {
-                    // TODO: Implement booking logic
+                    Get.to(() => const DroneBookingScreen());
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF02A96C),
@@ -177,7 +211,7 @@ class FeatureCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(51), // 0.2 opacity
+            color: Colors.black.withAlpha(51),
             blurRadius: 8,
             offset: const Offset(0, 3),
           ),
