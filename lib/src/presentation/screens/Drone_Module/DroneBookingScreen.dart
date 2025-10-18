@@ -1,8 +1,10 @@
+import 'dart:convert';
+
 import 'package:agri_vision/src/presentation/screens/Drone_Module/DroneBookingConfirmationScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
-
+import 'package:http/http.dart' as http;
 class DroneBookingScreen extends StatefulWidget {
   const DroneBookingScreen({super.key});
 
@@ -27,6 +29,44 @@ class _DroneBookingScreenState extends State<DroneBookingScreen> {
       _price = acres * 850;
     });
   }
+
+
+Future<void> submitOrder() async {
+  final url = Uri.parse('http://10.0.2.2:3000/api/order');
+
+  final body = {
+    "userId": "68e7a7ded367ffb6718d7197", // <- yeh user ka _id MongoDB se
+    "name": _nameController.text,
+    "phone": _phoneController.text,
+    "district": _districtController.text,
+    "tehsil": _tehsilController.text,
+    "city": _cityController.text,
+    "address": _addressController.text,
+    "acres": _acreController.text,
+    "price": _price.toString(),
+  };
+
+  try {
+    final response = await http.post(
+      url,
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode(body),
+    );
+
+    if (response.statusCode == 201) {
+      Get.snackbar("کامیابی", "آپ کا آرڈر کامیابی سے جمع ہو گیا!",
+          backgroundColor: Colors.green, colorText: Colors.white);
+      Get.to(() => OrderFinalPage());
+    } else {
+      final data = jsonDecode(response.body);
+      Get.snackbar("غلطی", data["message"] ?? "آرڈر جمع کرنے میں مسئلہ ہوا۔",
+          backgroundColor: Colors.red, colorText: Colors.white);
+    }
+  } catch (e) {
+    Get.snackbar("خرابی", "سرور سے رابطہ نہیں ہو سکا: $e",
+        backgroundColor: Colors.red, colorText: Colors.white);
+  }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -126,7 +166,8 @@ class _DroneBookingScreenState extends State<DroneBookingScreen> {
                             width: double.infinity,
                             child: ElevatedButton.icon(
                               onPressed: () {
-                                Get.to(() =>  OrderFinalPage());
+                                submitOrder();
+                              //  Get.to(() =>  OrderFinalPage());
                               },
                               icon: const Icon(Icons.air, color: Colors.white),
                               label: const Text(

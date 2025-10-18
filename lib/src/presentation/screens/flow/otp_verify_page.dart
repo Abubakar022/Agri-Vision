@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:agri_vision/src/presentation/screens/Detection_Module/CropScanScreen.dart';
 import 'package:agri_vision/src/presentation/screens/Navigation/navigation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -7,12 +6,10 @@ import 'package:http/http.dart' as http;
 import 'package:agri_vision/src/presentation/AppConstant/Colors.dart';
 
 class OtpVerifyPage extends StatefulWidget {
-  final String name;
   final String phone;
   final String verificationId;
 
   const OtpVerifyPage({
-    required this.name,
     required this.phone,
     required this.verificationId,
     super.key,
@@ -44,36 +41,31 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
       );
       await FirebaseAuth.instance.signInWithCredential(cred);
 
-      // ✅ Step 2: Send verified data to backend
-      final url = Uri.parse('http://10.0.2.2:3000/api/save-user'); // change for your setup
+      // ✅ Step 2: Save or verify user in MongoDB backend
+      final url = Uri.parse('http://10.0.2.2:3000/api/save-user'); // your backend endpoint
       final resp = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          'fullName': widget.name,
           'phone': widget.phone,
           'verified': true,
         }),
       );
 
-     if (resp.statusCode == 200) {
-  final data = jsonDecode(resp.body);
+      if (resp.statusCode == 200) {
+        final data = jsonDecode(resp.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(data['message'] ?? 'تصدیق کامیاب رہی!')),
+        );
 
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text(data['message'] ?? 'تصدیق کامیاب رہی!')),
-  );
-
-  // ✅ Navigate to CropScanScreen
-  Future.delayed(const Duration(seconds: 1), () {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const HomeNavigation(),
-      ),
-    );
-  });
-}
- else {
+        // ✅ Navigate to main HomeNavigation after success
+        Future.delayed(const Duration(seconds: 1), () {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const HomeNavigation()),
+          );
+        });
+      } else {
         final data = jsonDecode(resp.body);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(data['message'] ?? 'ڈیٹا محفوظ کرنے میں مسئلہ')),
