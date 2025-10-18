@@ -40,15 +40,18 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
         smsCode: _otpController.text.trim(),
       );
       await FirebaseAuth.instance.signInWithCredential(cred);
+      User? user = FirebaseAuth.instance.currentUser;
+      final String uid = user?.uid ?? '';
 
       // ✅ Step 2: Save or verify user in MongoDB backend
-      final url = Uri.parse('http://10.0.2.2:3000/api/save-user'); // your backend endpoint
+      final url =
+          Uri.parse('http://10.0.2.2:3000/create'); // your backend endpoint
       final resp = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'phone': widget.phone,
-          'verified': true,
+          'uId': uid,
         }),
       );
 
@@ -68,7 +71,8 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
       } else {
         final data = jsonDecode(resp.body);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(data['message'] ?? 'ڈیٹا محفوظ کرنے میں مسئلہ')),
+          SnackBar(
+              content: Text(data['message'] ?? 'ڈیٹا محفوظ کرنے میں مسئلہ')),
         );
       }
     } on FirebaseAuthException catch (e) {
@@ -78,7 +82,8 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
       } else if (e.code == 'session-expired') {
         message = 'OTP کی مدت ختم ہو گئی ہے، دوبارہ کوشش کریں';
       }
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('مسئلہ پیش آیا: $e')),
@@ -98,7 +103,6 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
           children: [
             Image.asset('assets/images/otp.jpeg', fit: BoxFit.cover),
             Container(color: Colors.black.withAlpha(50)),
-
             Center(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -132,7 +136,8 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
                       ),
                       decoration: InputDecoration(
                         labelText: 'OTP درج کریں',
-                        labelStyle: const TextStyle(color: Colors.white70, fontSize: 16),
+                        labelStyle: const TextStyle(
+                            color: Colors.white70, fontSize: 16),
                         filled: true,
                         fillColor: Colors.white.withAlpha(50),
                         border: OutlineInputBorder(
@@ -146,7 +151,6 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
                       ),
                     ),
                     const SizedBox(height: 30),
-
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -179,20 +183,21 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
                               ),
                       ),
                     ),
-
                     const SizedBox(height: 20),
-
                     RichText(
                       textAlign: TextAlign.center,
                       text: TextSpan(
-                        style: const TextStyle(fontSize: 14, color: Colors.white70),
+                        style: const TextStyle(
+                            fontSize: 14, color: Colors.white70),
                         children: [
-                          const TextSpan(text: "اگر آپ کو OTP موصول نہیں ہوا، "),
+                          const TextSpan(
+                              text: "اگر آپ کو OTP موصول نہیں ہوا، "),
                           WidgetSpan(
                             child: GestureDetector(
                               onTap: () {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('OTP دوبارہ بھیج دیا گیا')),
+                                  const SnackBar(
+                                      content: Text('OTP دوبارہ بھیج دیا گیا')),
                                 );
                               },
                               child: const Text(
