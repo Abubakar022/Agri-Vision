@@ -9,3 +9,15 @@ try{
     throw err;
 }
 }
+
+
+exports.getOrder = async (req, res,next) => {
+try{
+    const {userId, } = req.body;
+    const user = await SaveOrder.getOrderData(userId, );
+    res.json({status: 'success', success: user});
+
+} catch(err){
+    throw err;
+}
+}

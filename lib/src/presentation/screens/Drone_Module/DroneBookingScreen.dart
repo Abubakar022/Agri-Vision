@@ -51,7 +51,7 @@ class _DroneBookingScreenState extends State<DroneBookingScreen> {
 
     try {
       // Use emulator-local URL (change to your real server / ip for device)
-      final url = Uri.parse('http://10.0.2.2:3000/api/order/create');
+      final url = Uri.parse('http://10.0.2.2:3000/order');
 
       // Get Firebase UID if available (optional)
       User? user = FirebaseAuth.instance.currentUser;

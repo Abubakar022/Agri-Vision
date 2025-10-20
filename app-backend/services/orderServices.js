@@ -20,5 +20,18 @@ class OrderServices {
       throw new Error("Error while saving order: " + err.message);
     }
   }
+
+
+
+  static async getOrderData(userId) {
+    try {
+      const orderData = await orderModel.find({
+        userId
+      });
+      return orderData;
+    } catch (err) {
+      throw new Error("Error while saving order: " + err.message);
+    }
+  }
 }
 module.exports = OrderServices;

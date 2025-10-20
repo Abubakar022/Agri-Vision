@@ -1,9 +1,11 @@
 import 'dart:convert';
+import 'package:agri_vision/src/presentation/AppConstant/user_session.dart';
 import 'package:agri_vision/src/presentation/screens/Navigation/navigation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 import 'package:agri_vision/src/presentation/AppConstant/Colors.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class OtpVerifyPage extends StatefulWidget {
   final String phone;
@@ -39,19 +41,30 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
         verificationId: widget.verificationId,
         smsCode: _otpController.text.trim(),
       );
-      await FirebaseAuth.instance.signInWithCredential(cred);
-      User? user = FirebaseAuth.instance.currentUser;
-      final String uid = user?.uid ?? '';
 
-      // ✅ Step 2: Save or verify user in MongoDB backend
-      final url =
-          Uri.parse('http://10.0.2.2:3000/create'); // your backend endpoint
+      // ✅ Sign in user with credential
+      UserCredential userCredential =
+          await FirebaseAuth.instance.signInWithCredential(cred);
+
+      User? user = userCredential.user; // Firebase user object
+      if (user == null) {
+        throw Exception("User not found after OTP verification");
+      }
+
+      // ✅ Step 2: Save userId (UID) globally + locally
+      final prefs = await SharedPreferences.getInstance();
+      UserSession.uid = user.uid;
+      await prefs.setString('userId', user.uid);
+      await prefs.setBool('isLoggedIn', true);
+
+      // ✅ Step 3: Send user data to your MongoDB backend
+      final url = Uri.parse('http://10.0.2.2:3000/create');
       final resp = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'phone': widget.phone,
-          'uId': uid,
+          'uId': user.uid,
         }),
       );
 
@@ -61,7 +74,7 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
           SnackBar(content: Text(data['message'] ?? 'تصدیق کامیاب رہی!')),
         );
 
-        // ✅ Navigate to main HomeNavigation after success
+        // ✅ Step 4: Navigate to Home Screen
         Future.delayed(const Duration(seconds: 1), () {
           Navigator.pushReplacement(
             context,
