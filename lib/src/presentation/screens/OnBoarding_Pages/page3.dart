@@ -42,7 +42,7 @@ class page3 extends StatelessWidget {
                           ),
                           Aspace.spaceVertical(20),
                            ClipRRect(
-                            borderRadius: BorderRadius.circular(50),
+                            borderRadius: BorderRadius.circular(25),
                             child: Image.asset("assets/images/onboard3.png",height: height*0.4,width: width*0.9, alignment: Alignment.center,fit: BoxFit.cover,))
            
                         

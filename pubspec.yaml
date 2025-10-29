@@ -25,6 +25,9 @@ dependencies:
   intl: ^0.20.2
   shared_preferences: ^2.5.3
   google_nav_bar: ^5.0.7
+  speech_to_text: ^7.3.0
+  flutter_tts: ^4.2.3
+
 
 dev_dependencies:
   flutter_test:

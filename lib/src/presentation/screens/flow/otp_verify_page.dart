@@ -147,6 +147,7 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
                         letterSpacing: 3,
                         fontSize: 18,
                       ),
+                      textDirection: TextDirection.rtl,
                       decoration: InputDecoration(
                         labelText: 'OTP درج کریں',
                         labelStyle: const TextStyle(
