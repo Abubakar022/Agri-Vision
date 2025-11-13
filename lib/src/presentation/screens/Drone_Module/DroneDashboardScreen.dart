@@ -175,7 +175,7 @@ class DroneServiceScreen extends StatelessWidget {
 
             const SizedBox(height: 15),
             const Text(
-              'کوریج کے علاقے دیکھیں',
+"یہ سروس فی الحال پنجاب کے علاقوں کے لیے میسر ہے۔",
               style: TextStyle(
                 color: Color(0xFF02A96C),
                 fontSize: 14,

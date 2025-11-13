@@ -23,8 +23,14 @@ const orderSchema = new mongoose.Schema(
     cancellationReason: {
       type: String,
       default: null 
-    }
+    },
+    scheduleDate: {
+  type: Date,
+  default: null
+},
+
   },
+  
   { timestamps: true }
 );
 

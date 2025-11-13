@@ -2,6 +2,7 @@
 // ignore: file_names
 import 'dart:io';
 import 'package:agri_vision/src/presentation/screens/Detection_Module/resultScreen.dart';
+import 'package:agri_vision/src/presentation/widgets/custom_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
@@ -17,7 +18,7 @@ class _CropScanScreenState extends State<CropScanScreen> {
   File? _selectedImage;
   final ImagePicker _picker = ImagePicker();
   bool _isLoading = false;
-  String username = "ابو بکر";
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   // Simulate API call
   Future<void> _analyzeImage() async {
@@ -141,7 +142,44 @@ class _CropScanScreenState extends State<CropScanScreen> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
+        key: _scaffoldKey,
         backgroundColor: const Color(0xFFFDF8E3),
+        appBar: AppBar(
+          backgroundColor: const Color(0xFFFDF8E3), // Same as screen background
+          elevation: 0, // Remove shadow
+          leading: IconButton(
+            icon: const Icon(
+              Icons.menu,
+              color: Color(0xFF02A96C), // Green color to match the theme
+              size: 28,
+            ),
+            onPressed: () {
+              _scaffoldKey.currentState?.openDrawer();
+            },
+          ),
+          title: const Text(
+            "زرعی ویژن",
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF02A96C), // Green color
+            ),
+          ),
+          centerTitle: true,
+          actions: [
+            // You can add additional actions here if needed
+            IconButton(
+              icon: const Icon(
+                Icons.notifications_none,
+                color: Color(0xFF02A96C),
+              ),
+              onPressed: () {
+                // Handle notification button press
+              },
+            ),
+          ],
+        ),
+        drawer: const CustomDrawer(), // Using the separated drawer widget
         body: Stack(
           children: [
             // Background decoration
@@ -190,7 +228,7 @@ class _CropScanScreenState extends State<CropScanScreen> {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.green.withOpacity(0.3),
+                            color: Colors.green.withAlpha(75),
                             blurRadius: 15,
                             offset: const Offset(0, 5),
                           ),
@@ -204,10 +242,10 @@ class _CropScanScreenState extends State<CropScanScreen> {
                             color: Colors.white,
                           ),
                           const SizedBox(height: 10),
-                          Text(
-                            "خوش آمدید، $username",
+                          const Text(
+                            "خوش آمدید ",
                             textAlign: TextAlign.center,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
@@ -215,7 +253,7 @@ class _CropScanScreenState extends State<CropScanScreen> {
                           ),
                           const SizedBox(height: 5),
                           const Text(
-                            "اپنی فصل کی تصویر اپ لوڈ کریں اور تجزیہ حاصل کریں",
+                        "گندم کے متاثرہ پودے کی تصویر اپ لوڈ کریں اور بیماری کی تشخیص کریں",
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 14,
@@ -270,7 +308,7 @@ class _CropScanScreenState extends State<CropScanScreen> {
                                         Container(
                                           decoration: BoxDecoration(
                                             color: const Color(0xFF02A96C)
-                                                .withOpacity(0.1),
+                                                .withAlpha(25),
                                             shape: BoxShape.circle,
                                           ),
                                           padding: const EdgeInsets.all(20),
@@ -295,7 +333,7 @@ class _CropScanScreenState extends State<CropScanScreen> {
                             if (_selectedImage != null)
                               Container(
                                 decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.4),
+                                  color: Colors.black.withAlpha(100),
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: const Center(
@@ -349,7 +387,7 @@ class _CropScanScreenState extends State<CropScanScreen> {
                               borderRadius: BorderRadius.circular(16),
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(0xFF02A96C).withOpacity(0.3),
+                                  color: const Color(0xFF02A96C).withAlpha(75),
                                   blurRadius: 10,
                                   offset: const Offset(0, 5),
                                 ),
@@ -420,7 +458,7 @@ class _CropScanScreenState extends State<CropScanScreen> {
                                   Icon(Icons.analytics, color: Colors.white),
                                   SizedBox(width: 12),
                                   Text(
-                                    "تجزیہ کریں",
+                                   "تشخیص کریں",
                                     style: TextStyle(
                                       fontSize: 18,
                                       color: Colors.white,
@@ -486,172 +524,3 @@ class _ActionButton extends StatelessWidget {
     );
   }
 }
-
-// import 'dart:io';
-// import 'package:agri_vision/src/presentation/screens/Detection_Module/resultScreen.dart';
-// import 'package:flutter/material.dart';
-// import 'package:get/get.dart';
-// import 'package:get/get_core/src/get_main.dart';
-
-// class CropScanScreen extends StatelessWidget {
-//   const CropScanScreen({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     //File? _selectedImage;
-//     String username = "ابو بکر";
-//     File? selectedImage; // dynamically filled later
-
-//     return SafeArea(
-//       child: Scaffold(
-//         backgroundColor: const Color(0xFFFDF8E3), // soft wheat tone
-//         body: Center(
-//           child: Padding(
-//             padding: const EdgeInsets.all(16.0),
-//             child: Column(
-//               mainAxisSize: MainAxisSize.min,
-//               crossAxisAlignment: CrossAxisAlignment.center,
-//               children: [
-//                 // 🌾 Greeting Text
-//                 Text(
-//                   "خوش آمدید، $username",
-//                   textAlign: TextAlign.center,
-//                   style: const TextStyle(
-//                     fontSize: 20,
-//                     fontWeight: FontWeight.bold,
-//                     color: Color(0xFF02A96C),
-//                   ),
-//                 ),
-
-//                 const SizedBox(height: 40),
-
-//                 // 🌾 Image Card
-//                 Container(
-//                   height: 220,
-//                   width: 220,
-//                   decoration: BoxDecoration(
-//                     color: Colors.white,
-//                     borderRadius: BorderRadius.circular(24),
-//                     boxShadow: [
-//                       BoxShadow(
-//                         color: Colors.black.withAlpha(77), // 0.3 opacity shadow
-//                         blurRadius: 10,
-//                         offset: const Offset(0, 4),
-//                       ),
-//                     ],
-//                   ),
-//                   child: Stack(
-//                     alignment: Alignment.center,
-//                     children: [
-//                       ClipRRect(
-//                         borderRadius: BorderRadius.circular(24),
-//                         child: selectedImage != null
-//                             ? Image.file(selectedImage!, fit: BoxFit.cover)
-//                             : Image.asset(
-//                                 'assets/images/scan.jpeg',
-//                                 fit: BoxFit.cover,
-//                                 height: double.infinity,
-//                                 width: double.infinity,
-//                               ),
-//                       ),
-//                       Container(
-//                         decoration: BoxDecoration(
-//                           color: Colors.black.withAlpha(102), // ≈ 0.4 opacity
-//                           shape: BoxShape.circle,
-//                         ),
-//                         padding: const EdgeInsets.all(12),
-//                         child: const Icon(
-//                           Icons.camera_alt,
-//                           color: Colors.white,
-//                           size: 40,
-//                         ),
-//                       ),
-//                     ],
-//                   ),
-//                 ),
-
-//                 const SizedBox(height: 30),
-
-//                 // 📷 Buttons Row
-//                 Row(
-//                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-//                   children: [
-//                     ElevatedButton.icon(
-//                       onPressed: () {
-//                         Get.to(() => DetectionResultScreen( imageFile: 'assets/images/scan.jpeg', diseaseName: "پتوں کا زنگ",description: "یہ بیماری عام طور پر گندم کے پتوں پر زرد دھبے پیدا کرتی ہے۔", recommendation: "زرعی ماہر سے مشورہ کریں اور تجویز کردہ اسپرے استعمال کریں۔",));
-//                       },
-//                       icon: const Icon(Icons.camera_alt, color: Colors.white),
-//                       label: const Text(
-//                         "تصویر کھینچیں",
-//                         style: TextStyle(fontSize: 16, color: Colors.white),
-//                       ),
-//                       style: ElevatedButton.styleFrom(
-//                         backgroundColor: const Color(0xFF02A96C),
-//                         padding: const EdgeInsets.symmetric(
-//                             horizontal: 18, vertical: 12),
-//                         shape: RoundedRectangleBorder(
-//                           borderRadius: BorderRadius.circular(12),
-//                         ),
-//                       ),
-//                     ),
-//                     ElevatedButton.icon(
-//                       onPressed: () {
-//                         Get.to(() => DetectionResultScreen( imageFile: 'assets/images/scan.jpeg', diseaseName: "پتوں کا زنگ",description: "یہ بیماری عام طور پر گندم کے پتوں پر زرد دھبے پیدا کرتی ہے۔", recommendation: "زرعی ماہر سے مشورہ کریں اور تجویز کردہ اسپرے استعمال کریں۔",));
-//                       },
-//                       icon: const Icon(Icons.photo, color: Colors.white),
-//                       label: const Text(
-//                         "فوٹو منتخب کریں",
-//                         style: TextStyle(fontSize: 16, color: Colors.white),
-//                       ),
-//                       style: ElevatedButton.styleFrom(
-//                         backgroundColor: const Color(0xFF02A96C),
-//                         padding: const EdgeInsets.symmetric(
-//                             horizontal: 18, vertical: 12),
-//                         shape: RoundedRectangleBorder(
-//                           borderRadius: BorderRadius.circular(12),
-//                         ),
-//                       ),
-//                     ),
-//                   ],
-//                 ),
-
-//                 const SizedBox(height: 30),
-
-//                 // 🩺 Detect Button
-//                 SizedBox(
-//                   width: double.infinity,
-//                   height: 50,
-//                   child: ElevatedButton(
-//                     onPressed: () {},
-//                     style: ElevatedButton.styleFrom(
-//                       backgroundColor: const Color(0xFF02A96C),
-//                       shape: RoundedRectangleBorder(
-//                         borderRadius: BorderRadius.circular(16),
-//                       ),
-//                       elevation: 5,
-//                     ),
-//                     child: const Row(
-//                       mainAxisAlignment: MainAxisAlignment.center,
-//                       children: [
-//                         Icon(Icons.local_hospital, color: Colors.white),
-//                         SizedBox(width: 8),
-//                         Text(
-//                           "تجزیہ کریں",
-//                           style: TextStyle(
-//                             fontSize: 18,
-//                             color: Colors.white,
-//                             fontWeight: FontWeight.bold,
-//                           ),
-//                         ),
-//                       ],
-//                     ),
-//                   ),
-//                 ),
-//               ],
-//             ),
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-// }

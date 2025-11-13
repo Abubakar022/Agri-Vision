@@ -6,7 +6,7 @@ class Appcolor {
   static const Color lightFontColor = Color(0xFF000000);
   static const Color darkFontColor = Color(0xFFEAEAEA);
   static const Color green = Color(0xFF02a96c);
-
+static const Color cream = Color(0xFFfdf0d0);
   static const Color inputBlack = Color(0xFF1E1E1E);
 
   static const Color onBoardingColor1 = Color(0xFF0A1F44);
