@@ -1,12 +1,15 @@
 import 'package:agri_vision/src/presentation/AppConstant/Colors.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class Chatbot extends StatefulWidget {
-  const Chatbot({super.key});
+  final String? initialMessage;
+  
+  const Chatbot({super.key, this.initialMessage});
 
   @override
   State<Chatbot> createState() => _ChatbotState();
@@ -30,6 +33,7 @@ class _ChatbotState extends State<Chatbot> {
   String _spokenText = "";
   bool _sttAvailable = false;
   bool _isLoading = false;
+  bool _initialMessageSent = false;
 
   // Chatbot responses - Replace with actual API calls
   final Map<String, String> _botResponses = {
@@ -39,6 +43,19 @@ class _ChatbotState extends State<Chatbot> {
     'سڑنا': 'یہ پاؤڈری ملڈیو ہو سکتا ہے۔ سفارش: گندم کے کھیتوں میں ہوا کی گردش بڑھائیں اور فنگسائڈ کا استعمال کریں۔',
     'زنگ': 'پتوں کا زنگ ایک عام بیماری ہے۔ سفارش: مزاحمتی اقسام کا استعمال کریں اور وقت پر سپرے کریں۔',
     'گندم': 'گندم کی مختلف بیماریوں میں رسٹ، سنٹ، اور پاؤڈری ملڈیو شامل ہیں۔ براہ کرم مخصوص علامات بیان کریں۔',
+    'ایفڈ': 'ایفڈ (Aphids) چھوٹے کیڑے ہیں جو گندم کے پودوں کا رس چوستے ہیں۔ سفارش: مناسب کیڑے مار ادویات کا استعمال کریں۔',
+    'کالی زنگ': 'کالی زنگ ایک سنگین بیماری ہے۔ سفارش: مزاحمتی اقسام کاشت کریں اور فنگسائڈ سپرے کریں۔',
+    'بلاسٹ': 'بلاسٹ بیماری کے لیے فوری اقدامات کی ضرورت ہوتی ہے۔ سفارش: متاثرہ پودوں کو الگ کریں۔',
+    'بھوری زنگ': 'بھوری زنگ کے خلاف قوت مدافعت رکھنے والی اقسام استعمال کریں۔',
+    'فیوزیریم ہیڈ بلائٹ': 'فیوزیریم ہیڈ بلائٹ کے لیے صحت مند بیج استعمال کریں۔',
+    'پتوں کا بلائٹ': 'پتوں کے بلائٹ کے خلاف باقاعدہ سپرے پروگرام اپنائیں۔',
+    'پھپھوندی (ملڈیو)': 'پھپھوندی کے خلاف مناسب ہوا کی گردش ضروری ہے۔',
+    'مائٹ': 'مائٹ کے خلاف مخصوص ایکارائسائڈز استعمال کریں۔',
+    'سیپٹوریا': 'سیپٹوریا کے خلاف متوازن کھاد کا استعمال کریں۔',
+    'کھنڈ بیماری (سماٹ)': 'کھنڈ بیماری کے لیے صاف ستھری کاشتکاری اپنائیں۔',
+    'تنا مکھی': 'تنا مکھی کے خلاف بروقت اقدامات کریں۔',
+    'ٹین اسپاٹ': 'ٹین اسپاٹ کے لیے مناسب پانی کا انتظام کریں۔',
+    'پیلی زنگ': 'پیلی زنگ کے خلاف مزاحمتی اقسام استعمال کریں۔',
     'default': 'میں آپ کی بات سمجھ گیا ہوں۔ براہ کرم مزید تفصیل سے بیان کریں تاکہ میں بہتر مدد کر سکوں۔'
   };
 
@@ -49,7 +66,22 @@ class _ChatbotState extends State<Chatbot> {
     _initSTT();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollToBottom(); // Scroll to bottom when chat loads to show greeting
+      
+      // Send initial message after a short delay if provided
+      if (widget.initialMessage != null && !_initialMessageSent) {
+        Future.delayed(const Duration(milliseconds: 500), () {
+          _sendInitialMessage(widget.initialMessage!);
+        });
+      }
     });
+  }
+
+  void _sendInitialMessage(String message) {
+    if (_initialMessageSent) return;
+    
+    _initialMessageSent = true;
+    _controller.text = message;
+    _sendMessage();
   }
 
   Future<void> _initTTS() async {
@@ -122,6 +154,32 @@ class _ChatbotState extends State<Chatbot> {
       return _botResponses['سلام']!;
     } else if (lowerMessage.contains('گندم')) {
       return _botResponses['گندم']!;
+    } else if (lowerMessage.contains('ایفڈ')) {
+      return _botResponses['ایفڈ']!;
+    } else if (lowerMessage.contains('کالی زنگ')) {
+      return _botResponses['کالی زنگ']!;
+    } else if (lowerMessage.contains('بلاسٹ')) {
+      return _botResponses['بلاسٹ']!;
+    } else if (lowerMessage.contains('بھوری زنگ')) {
+      return _botResponses['بھوری زنگ']!;
+    } else if (lowerMessage.contains('فیوزیریم')) {
+      return _botResponses['فیوزیریم ہیڈ بلائٹ']!;
+    } else if (lowerMessage.contains('پتوں') && lowerMessage.contains('بلائٹ')) {
+      return _botResponses['پتوں کا بلائٹ']!;
+    } else if (lowerMessage.contains('پھپھوندی') || lowerMessage.contains('ملڈیو')) {
+      return _botResponses['پھپھوندی (ملڈیو)']!;
+    } else if (lowerMessage.contains('مائٹ')) {
+      return _botResponses['مائٹ']!;
+    } else if (lowerMessage.contains('سیپٹوریا')) {
+      return _botResponses['سیپٹوریا']!;
+    } else if (lowerMessage.contains('کھنڈ') || lowerMessage.contains('سماٹ')) {
+      return _botResponses['کھنڈ بیماری (سماٹ)']!;
+    } else if (lowerMessage.contains('تنا مکھی')) {
+      return _botResponses['تنا مکھی']!;
+    } else if (lowerMessage.contains('ٹین اسپاٹ')) {
+      return _botResponses['ٹین اسپاٹ']!;
+    } else if (lowerMessage.contains('پیلی زنگ')) {
+      return _botResponses['پیلی زنگ']!;
     } else {
       return _botResponses['default']!;
     }
@@ -142,15 +200,12 @@ class _ChatbotState extends State<Chatbot> {
     final hasPermission = await _checkPermissions();
     if (!hasPermission) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'مائیکروفون کی اجازت درکار ہے',
-              style: GoogleFonts.vazirmatn(),
-              textDirection: TextDirection.rtl,
-            ),
-            backgroundColor: Colors.red,
-          ),
+        Get.snackbar(
+          'اجازت درکار',
+          'مائیکروفون کی اجازت درکار ہے',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
         );
       }
       return;
@@ -164,6 +219,7 @@ class _ChatbotState extends State<Chatbot> {
     try {
       setState(() => _isListening = true);
       _spokenText = "";
+      _controller.clear(); // Clear text field when starting to listen
       
       await _speech.listen(
         listenFor: const Duration(seconds: 30),
@@ -209,7 +265,7 @@ class _ChatbotState extends State<Chatbot> {
       _isLoading = true;
     });
     
-    _controller.clear();
+    _controller.clear(); // Clear the text field after sending
     _scrollToBottom();
 
     try {
@@ -251,15 +307,9 @@ class _ChatbotState extends State<Chatbot> {
     return Scaffold(
       backgroundColor: const Color(0xFFFDF8E3), // Same as CropScanScreen
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFDFE3),
+        backgroundColor: const Color(0xFFFDF8E3),
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Color(0xFF02A96C),
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
+        
         title: Text(
           'گندم کی بیماریوں کی معلومات',
           style: GoogleFonts.vazirmatn(
@@ -299,7 +349,7 @@ class _ChatbotState extends State<Chatbot> {
                 borderRadius: BorderRadius.circular(20),
                 child: ListView.builder(
                   controller: _scrollController,
-                  reverse: false, // REMOVED reverse: true - messages now flow from top to bottom
+                  reverse: false,
                   padding: const EdgeInsets.all(16),
                   itemCount: _messages.length + (_isLoading ? 1 : 0),
                   itemBuilder: (context, index) {
@@ -532,8 +582,9 @@ class _ChatbotState extends State<Chatbot> {
                 child: TextField(
                   controller: _controller,
                   textDirection: TextDirection.rtl,
+                  textAlign: TextAlign.right,
                   decoration: InputDecoration(
-                    hintText: 'اپنا سوال یہاں لکھیں...',
+                    hintText: 'اپنا سوال یہاں لکھیں',
                     hintStyle: GoogleFonts.vazirmatn(
                       color: Colors.grey[600],
                       fontSize: 14,
@@ -563,9 +614,8 @@ class _ChatbotState extends State<Chatbot> {
   }
 
   void _showHelpDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => Directionality(
+    Get.dialog(
+      Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
           title: Text(
@@ -591,7 +641,7 @@ class _ChatbotState extends State<Chatbot> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Get.back(),
               child: Text(
                 'سمجھ گیا',
                 style: GoogleFonts.vazirmatn(

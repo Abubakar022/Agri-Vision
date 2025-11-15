@@ -52,7 +52,7 @@ class _CropScanScreenState extends State<CropScanScreen> {
     };
 
     Get.to(() => DetectionResultScreen(
-      imageFile: "assets/images/scan.jpeg",
+      imageFile: _selectedImage!, // Pass the actual selected image file
       diseaseName: dummyResponse['diseaseName']!,
       description: dummyResponse['description']!,
       recommendation: dummyResponse['recommendation']!,
@@ -73,15 +73,36 @@ class _CropScanScreenState extends State<CropScanScreen> {
         setState(() {
           _selectedImage = File(image.path);
         });
+        
+        Get.snackbar(
+          'کامیابی',
+          'تصویر کامیابی سے منتخب ہو گئی',
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.BOTTOM,
+        );
       }
     } catch (e) {
       Get.snackbar(
         'خرابی',
-        'تصویر منتخب کرنے میں مسئلہ ہوا',
+        'تصویر منتخب کرنے میں مسئلہ ہوا: $e',
         backgroundColor: Colors.red,
         colorText: Colors.white,
       );
     }
+  }
+
+  void _removeImage() {
+    setState(() {
+      _selectedImage = null;
+    });
+    
+    Get.snackbar(
+      'ہٹا دیا گیا',
+      'تصویر ہٹا دی گئی ہے',
+      backgroundColor: Colors.blue,
+      colorText: Colors.white,
+    );
   }
 
   void _showImageSourceDialog() {
@@ -167,7 +188,16 @@ class _CropScanScreenState extends State<CropScanScreen> {
           ),
           centerTitle: true,
           actions: [
-            // You can add additional actions here if needed
+            // Clear image button when image is selected
+            if (_selectedImage != null)
+              IconButton(
+                icon: const Icon(
+                  Icons.delete_outline,
+                  color: Colors.red,
+                ),
+                onPressed: _removeImage,
+                tooltip: 'تصویر ہٹائیں',
+              ),
             IconButton(
               icon: const Icon(
                 Icons.notifications_none,
@@ -301,6 +331,31 @@ class _CropScanScreenState extends State<CropScanScreen> {
                                       fit: BoxFit.cover,
                                       width: double.infinity,
                                       height: double.infinity,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            const Icon(
+                                              Icons.error_outline,
+                                              color: Colors.red,
+                                              size: 50,
+                                            ),
+                                            const SizedBox(height: 10),
+                                            const Text(
+                                              "تصویر لوڈ نہیں ہو سکی",
+                                              style: TextStyle(
+                                                color: Colors.red,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 10),
+                                            ElevatedButton(
+                                              onPressed: _showImageSourceDialog,
+                                              child: const Text("دوبارہ کوشش کریں"),
+                                            ),
+                                          ],
+                                        );
+                                      },
                                     )
                                   : Column(
                                       mainAxisAlignment: MainAxisAlignment.center,
@@ -327,6 +382,16 @@ class _CropScanScreenState extends State<CropScanScreen> {
                                             fontWeight: FontWeight.w600,
                                           ),
                                         ),
+                                        const SizedBox(height: 5),
+                                        Text(
+                                          _selectedImage == null 
+                                            ? "کلک کریں تصویر منتخب کرنے کے لیے"
+                                            : "تصویر منتخب ہو چکی ہے",
+                                          style: const TextStyle(
+                                            color: Colors.grey,
+                                            fontSize: 12,
+                                          ),
+                                        ),
                                       ],
                                     ),
                             ),
@@ -349,7 +414,24 @@ class _CropScanScreenState extends State<CropScanScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 10),
+
+                    // Selected image info
+                    if (_selectedImage != null)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Text(
+                          "تصویر منتخب ہو چکی ہے۔ اب 'تشخیص کریں' بٹن پر کلک کریں۔",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: const Color(0xFF02A96C),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+
+                    const SizedBox(height: 20),
 
                     // 📷 Action Buttons
                     Row(

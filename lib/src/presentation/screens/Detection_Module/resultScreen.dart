@@ -1,8 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:agri_vision/src/presentation/screens/ChatBot_Module/chatbot.dart';
 
 class DetectionResultScreen extends StatelessWidget {
-  final String imageFile;
+  final File imageFile; // Changed from String to File
   final String diseaseName;
   final String description;
   final String recommendation;
@@ -15,11 +17,52 @@ class DetectionResultScreen extends StatelessWidget {
     required this.recommendation,
   });
 
+  // Disease to Urdu prompt mapping
+  String _getDiseasePrompt(String diseaseName) {
+    final promptMap = {
+      'ایفڈ': 'ایفڈ (Aphids) کے بارے میں مزید معلومات درکار ہیں',
+      'کالی زنگ': 'کالی زنگ (Black Rust) کی بیماری کے بارے میں رہنمائی چاہیے',
+      'بلاسٹ': 'بلاسٹ بیماری کی علامات اور علاج بتائیں',
+      'بھوری زنگ': 'بھوری زنگ (Brown Rust) کے تدارک کے طریقے',
+      'فیوزیریم ہیڈ بلائٹ': 'فیوزیریم ہیڈ بلائٹ کی تشخیص اور کنٹرول',
+      'پتوں کا بلائٹ': 'پتوں کے بلائٹ کی وجوہات اور علاج',
+      'پھپھوندی (ملڈیو)': 'پھپھوندی یا ملڈیو کے مسائل اور حل',
+      'مائٹ': 'مائٹ کے حملے اور ان کا تدارک',
+      'سیپٹوریا': 'سیپٹوریا بیماری کی تفصیلات',
+      'کھنڈ بیماری (سماٹ)': 'کھنڈ بیماری یا سماٹ کے بارے میں معلومات',
+      'تنا مکھی': 'تنا مکھی کے حملے اور روک تھام',
+      'ٹین اسپاٹ': 'ٹین اسپاٹ کی بیماری کی علامات',
+      'پیلی زنگ': 'پیلی زنگ (Yellow Rust) کا علاج اور بچاؤ',
+    };
+    
+    return promptMap[diseaseName] ?? '$diseaseName کے بارے میں مزید معلومات درکار ہیں';
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
         backgroundColor: const Color(0xFFFDF8E3), // soft wheat background
+        appBar: AppBar(
+          backgroundColor: const Color(0xFFFDF8E3),
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(
+              Icons.arrow_back,
+              color: Color(0xFF02A96C),
+            ),
+            onPressed: () => Get.back(), // Using Get.back() instead of Navigator.pop
+          ),
+          title: const Text(
+            "نتیجہ تشخیص",
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF02A96C),
+            ),
+          ),
+          centerTitle: true,
+        ),
         body: Center(
           child: SingleChildScrollView(
             child: Padding(
@@ -32,7 +75,7 @@ class DetectionResultScreen extends StatelessWidget {
 
                   // 🌾 Results Title
                   const Text(
-                    "نتائج",
+                    "نتائج تشخیص",
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
@@ -60,13 +103,42 @@ class DetectionResultScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
+                        // Updated Image display for File
                         ClipRRect(
                           borderRadius: BorderRadius.circular(16),
-                          child: Image.asset(
+                          child: Image.file(
                             imageFile,
                             fit: BoxFit.cover,
                             width: double.infinity,
                             height: 180,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                height: 180,
+                                color: Colors.grey[200],
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(
+                                      Icons.error_outline,
+                                      color: Colors.red,
+                                      size: 40,
+                                    ),
+                                    const SizedBox(height: 10),
+                                    const Text(
+                                      "تصویر لوڈ نہیں ہو سکی",
+                                      style: TextStyle(
+                                        color: Colors.red,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    ElevatedButton(
+                                      onPressed: () => Get.back(),
+                                      child: const Text("واپس جائیں"),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -118,11 +190,18 @@ class DetectionResultScreen extends StatelessWidget {
                     height: 50,
                     child: ElevatedButton.icon(
                       onPressed: () {
-                        // TODO: Open AI chat or Q&A
+                        // Navigate to chatbot with auto-prompt using GetX
+                        Get.to(
+                          () => Chatbot(
+                            initialMessage: _getDiseasePrompt(diseaseName),
+                          ),
+                          transition: Transition.rightToLeft, // Smooth transition
+                          duration: const Duration(milliseconds: 300),
+                        );
                       },
                       icon: const Icon(Icons.chat_bubble, color: Colors.white),
                       label: const Text(
-                        "اے آئی سے مزید پوچھیں",
+                       "مزید معلومات حاصل کریں",
                         style: TextStyle(
                           fontSize: 18,
                           color: Colors.white,

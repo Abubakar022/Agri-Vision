@@ -8,17 +8,29 @@ class DroneServiceScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double safeAreaTop = MediaQuery.of(context).padding.top;
-
     return Scaffold(
       backgroundColor: const Color(0xFFFDF8E3),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFFDF8E3),
+        elevation: 0,
+       
+        title: const Text(
+          "ڈرون سپرے سروس",
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF02A96C),
+          ),
+        ),
+        centerTitle: true,
+      ),
       body: SingleChildScrollView(
         child: Column(
           children: [
             // 🌾 --- Top Image Section ---
             Container(
-              margin: EdgeInsets.fromLTRB(16, safeAreaTop + 16, 16, 0),
-              height: 220,
+              margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              height: 200,
               width: double.infinity,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(24),
@@ -50,21 +62,27 @@ class DroneServiceScreen extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
+                      Icon(
+                        Icons.precision_manufacturing,
+                        color: Colors.white,
+                        size: 40,
+                      ),
+                      SizedBox(height: 8),
                       Text(
-                        'ڈرون سپرے سروس',
+                        'جدید ڈرون ٹیکنالوجی',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 26,
-                          fontWeight: FontWeight.w900,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
                         ),
                         textAlign: TextAlign.center,
                       ),
-                      SizedBox(height: 6),
+                      SizedBox(height: 4),
                       Text(
-                        'صحت مند فصل کے لیے جدید سپرے ٹیکنالوجی',
+                        'فصلوں کی بہترین دیکھ بھال',
                         style: TextStyle(
                           color: Colors.white70,
-                          fontSize: 15,
+                          fontSize: 14,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -74,46 +92,41 @@ class DroneServiceScreen extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 30),
+            const SizedBox(height: 25),
 
-            // 🌿 --- Feature Cards Section ---
+            // 🚁 --- Booking Button (MOVED UP) ---
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: GridView.count(
-                crossAxisCount: 2,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                mainAxisSpacing: 14,
-                crossAxisSpacing: 14,
-                childAspectRatio: 0.95,
-                children: const [
-                  FeatureCard(
-                    icon: Icons.precision_manufacturing,
-                    title: 'درست سپرے',
-                    subtitle: 'ہدف شدہ فصل کے لیے مؤثر سپرے',
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: SizedBox(
+                width: double.infinity,
+                height: 55,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Get.to(() => const DroneBookingScreen());
+                  },
+                  icon: const Icon(Icons.book_online_rounded, color: Colors.white, size: 24),
+                  label: const Text(
+                    'سروس بک کریں',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
-                  FeatureCard(
-                    icon: Icons.savings,
-                    title: 'لاگت مؤثر',
-                    subtitle: 'کم لاگت میں زیادہ نتیجہ',
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF02A96C),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 6,
                   ),
-                  FeatureCard(
-                    icon: Icons.eco,
-                    title: 'ماحول دوست',
-                    subtitle: 'کیمیائی اثرات میں کمی',
-                  ),
-                  FeatureCard(
-                    icon: Icons.speed,
-                    title: 'تیز اور محفوظ',
-                    subtitle: 'وقت کی بچت اور بہتر کارکردگی',
-                  ),
-                ],
+                ),
               ),
             ),
 
-            const SizedBox(height: 30),
+            const SizedBox(height: 20),
 
-            // 🕒 --- Order History Button (NEW) ---
+            // 🕒 --- Order History Button (MOVED DOWN) ---
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: SizedBox(
@@ -125,9 +138,9 @@ class DroneServiceScreen extends StatelessWidget {
                   },
                   icon: const Icon(Icons.history, color: Color(0xFF02A96C)),
                   label: const Text(
-                    'آرڈر ہسٹری',
+                    'آرڈر ہسٹری دیکھیں',
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: 16,
                       color: Color(0xFF02A96C),
                       fontWeight: FontWeight.w600,
                     ),
@@ -144,44 +157,94 @@ class DroneServiceScreen extends StatelessWidget {
 
             const SizedBox(height: 25),
 
-            // 🚁 --- Booking Button ---
+            // 🌿 --- Feature Cards Section ---
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: SizedBox(
-                width: double.infinity,
-                height: 55,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Get.to(() => const DroneBookingScreen());
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF02A96C),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    elevation: 6,
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+               Center(
+  child: Text(
+    'ڈرون اسپرے سروس کے فائدے',
+    style: TextStyle(
+      fontSize: 18,
+      fontWeight: FontWeight.bold,
+      color: Color(0xFF02A96C),
+    ),
+    textAlign: TextAlign.center,
+  ),
+),
+
+                  const SizedBox(height: 12),
+                  GridView.count(
+                    crossAxisCount: 2,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    mainAxisSpacing: 14,
+                    crossAxisSpacing: 14,
+                    childAspectRatio: 0.95,
+                    children: const [
+                      FeatureCard(
+                        icon: Icons.precision_manufacturing,
+                        title: 'درست سپرے',
+                        subtitle: 'ہدف شدہ فصل کے لیے مؤثر سپرے',
+                      ),
+                      FeatureCard(
+                        icon: Icons.savings,
+                        title: 'لاگت مؤثر',
+                        subtitle: 'کم لاگت میں زیادہ نتیجہ',
+                      ),
+                      FeatureCard(
+                        icon: Icons.eco,
+                        title: 'ماحول دوست',
+                        subtitle: 'کیمیائی اثرات میں کمی',
+                      ),
+                      FeatureCard(
+                        icon: Icons.speed,
+                        title: 'تیز اور محفوظ',
+                        subtitle: 'وقت کی بچت اور بہتر کارکردگی',
+                      ),
+                    ],
                   ),
-                  child: const Text(
-                    'سروس بک کریں',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
+                ],
               ),
             ),
 
-            const SizedBox(height: 15),
-            const Text(
-"یہ سروس فی الحال پنجاب کے علاقوں کے لیے میسر ہے۔",
-              style: TextStyle(
-                color: Color(0xFF02A96C),
-                fontSize: 14,
-                decoration: TextDecoration.underline,
+            const SizedBox(height: 20),
+
+            // ℹ️ --- Service Availability Info ---
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFF02A96C).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: const Color(0xFF02A96C).withOpacity(0.3),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.info_outline,
+                    color: Color(0xFF02A96C),
+                    size: 20,
+                  ),
+                  const SizedBox(width: 5),
+                  Expanded(
+                    child: Text(
+                      "یہ سروس فی الحال پنجاب کے علاقوں کے لیے میسر ہے۔",
+                      style: TextStyle(
+                        color: const Color(0xFF02A96C),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
+
             const SizedBox(height: 30),
           ],
         ),
