@@ -34,6 +34,7 @@ class _ChatbotState extends State<Chatbot> {
   bool _sttAvailable = false;
   bool _isLoading = false;
   bool _initialMessageSent = false;
+  bool _ttsAvailable = false;
 
   // Chatbot responses - Replace with actual API calls
   final Map<String, String> _botResponses = {
@@ -86,24 +87,70 @@ class _ChatbotState extends State<Chatbot> {
 
   Future<void> _initTTS() async {
     try {
+      // Initialize TTS engine
       await _flutterTts.setSharedInstance(true);
       await _flutterTts.awaitSpeakCompletion(true);
       
-      // Try multiple Urdu locales
-      final List<String> urduLocales = ["ur-PK", "ur-IN", "ur"];
+      // Get available languages
+      final languages = await _flutterTts.getLanguages;
+      print("Available TTS languages: $languages");
+      
+      // Try to set Urdu language - use different possible locale codes
+      final urduLocales = ["ur-PK", "ur_IN", "ur", "urd", "ur-PK-u-nu-latn"];
+      
+      String? selectedLocale;
       for (String locale in urduLocales) {
-        if (await _flutterTts.isLanguageAvailable(locale)) {
-          await _flutterTts.setLanguage(locale);
-          print("TTS set to: $locale");
+        if (languages.contains(locale)) {
+          selectedLocale = locale;
           break;
         }
       }
       
+      // If Urdu not available, try English or use default
+      if (selectedLocale == null) {
+        if (languages.contains("en-US")) {
+          selectedLocale = "en-US";
+          print("Urdu not available, using English instead");
+        } else if (languages.isNotEmpty) {
+          selectedLocale = languages.first;
+          print("Using default language: $selectedLocale");
+        }
+      }
+      
+      if (selectedLocale != null) {
+        await _flutterTts.setLanguage(selectedLocale);
+        print("TTS set to: $selectedLocale");
+        setState(() {
+          _ttsAvailable = true;
+        });
+      } else {
+        print("No TTS languages available");
+        setState(() {
+          _ttsAvailable = false;
+        });
+      }
+      
+      // Configure TTS settings for better Urdu/English compatibility
       await _flutterTts.setSpeechRate(0.5);
       await _flutterTts.setPitch(1.0);
       await _flutterTts.setVolume(1.0);
+      
+      // Set engine parameters for better compatibility
+      await _flutterTts.setIosAudioCategory(
+        IosTextToSpeechAudioCategory.playback,
+        [
+          IosTextToSpeechAudioCategoryOptions.allowBluetooth,
+          IosTextToSpeechAudioCategoryOptions.allowBluetoothA2DP,
+          IosTextToSpeechAudioCategoryOptions.mixWithOthers,
+        ],
+      );
+      
     } catch (e) {
       print("TTS Initialization Error: $e");
+      setState(() {
+        _ttsAvailable = false;
+      });
+      _showRTLsnackbar('تنبہہ', 'آواز کا نظام دستیاب نہیں ہے', Colors.orange);
     }
   }
 
@@ -125,6 +172,46 @@ class _ChatbotState extends State<Chatbot> {
     } catch (e) {
       print("STT Initialization Error: $e");
     }
+  }
+
+  // Custom RTL Snackbar function
+  void _showRTLsnackbar(String title, String message, Color backgroundColor) {
+    Get.snackbar(
+      title,
+      message,
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: backgroundColor,
+      colorText: Colors.white,
+      borderRadius: 12,
+      margin: const EdgeInsets.all(16),
+      duration: const Duration(seconds: 3),
+      isDismissible: true,
+      dismissDirection: DismissDirection.horizontal,
+      forwardAnimationCurve: Curves.easeOutCubic,
+      reverseAnimationCurve: Curves.easeInCubic,
+      messageText: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Text(
+          message,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+      titleText: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Text(
+          title,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
   }
 
   // Permission check method
@@ -186,12 +273,25 @@ class _ChatbotState extends State<Chatbot> {
   }
 
   Future<void> _speak(String text) async {
+    if (!_ttsAvailable) {
+      _showRTLsnackbar('تنبہہ', 'آواز کا نظام دستیاب نہیں ہے', Colors.orange);
+      return;
+    }
+
     try {
       if (text.isNotEmpty) {
+        // Stop any ongoing speech
+        await _flutterTts.stop();
+        
+        // Speak the text
         await _flutterTts.speak(text);
+        
+        // Show speaking indicator
+        _showRTLsnackbar('آواز', 'جواب سنایا جا رہا ہے', Colors.blue);
       }
     } catch (e) {
       print("TTS Error: $e");
+      _showRTLsnackbar('خرابی', 'آواز چلانے میں مسئلہ ہوا', Colors.red);
     }
   }
 
@@ -199,20 +299,12 @@ class _ChatbotState extends State<Chatbot> {
   void _startListening() async {
     final hasPermission = await _checkPermissions();
     if (!hasPermission) {
-      if (mounted) {
-        Get.snackbar(
-          'اجازت درکار',
-          'مائیکروفون کی اجازت درکار ہے',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
-      }
+      _showRTLsnackbar('اجازت درکار', 'مائیکروفون کی اجازت درکار ہے', Colors.red);
       return;
     }
 
     if (!_sttAvailable) {
-      print("STT not available");
+      _showRTLsnackbar('خرابی', 'آواز کی پہچان دستیاب نہیں ہے', Colors.red);
       return;
     }
 
@@ -232,11 +324,13 @@ class _ChatbotState extends State<Chatbot> {
         },
         cancelOnError: true,
         partialResults: true,
-        localeId: "ur-PK",
+        localeId: "ur-PK", // Try Urdu Pakistan locale
+        listenMode: stt.ListenMode.dictation,
       );
     } catch (e) {
       print("Listening Error: $e");
       setState(() => _isListening = false);
+      _showRTLsnackbar('خرابی', 'آواز سننے میں مسئلہ ہوا', Colors.red);
     }
   }
 
@@ -246,6 +340,7 @@ class _ChatbotState extends State<Chatbot> {
       setState(() => _isListening = false);
     } catch (e) {
       print("Stop Listening Error: $e");
+      setState(() => _isListening = false);
     }
   }
 
@@ -309,7 +404,13 @@ class _ChatbotState extends State<Chatbot> {
       appBar: AppBar(
         backgroundColor: const Color(0xFFFDF8E3),
         elevation: 0,
-        
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Color(0xFF02A96C),
+          ),
+          onPressed: () => Get.back(),
+        ),
         title: Text(
           'گندم کی بیماریوں کی معلومات',
           style: GoogleFonts.vazirmatn(
@@ -320,6 +421,12 @@ class _ChatbotState extends State<Chatbot> {
         ),
         centerTitle: true,
         actions: [
+          // // TTS status indicator
+          // Icon(
+          //   _ttsAvailable ? Icons.volume_up : Icons.volume_off,
+          //   color: _ttsAvailable ? const Color(0xFF02A96C) : Colors.grey,
+          // ),
+          const SizedBox(width: 8),
           IconButton(
             icon: const Icon(Icons.info_outline, color: Color(0xFF02A96C)),
             onPressed: () {
@@ -415,7 +522,7 @@ class _ChatbotState extends State<Chatbot> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      if (!isUser) 
+                      if (!isUser && _ttsAvailable)
                         IconButton(
                           icon: const Icon(Icons.volume_up, size: 18, color: Color(0xFF02A96C)),
                           onPressed: () => _speak(message.text),
@@ -448,7 +555,7 @@ class _ChatbotState extends State<Chatbot> {
                           ],
                         ),
                       ),
-                      if (isUser)
+                      if (isUser && _ttsAvailable)
                         IconButton(
                           icon: const Icon(Icons.volume_up, size: 18, color: Colors.white),
                           onPressed: () => _speak(message.text),
@@ -632,10 +739,11 @@ class _ChatbotState extends State<Chatbot> {
               children: [
                 _buildHelpItem('🎤', 'وائس میں بات کریں'),
                 _buildHelpItem('⌨️', 'ٹائپ کر کے پیغام بھیجیں'),
-                _buildHelpItem('🔊', 'جواب سننے کے لیے سپیکر آئیکن پر کلک کریں'),
+                if (_ttsAvailable) _buildHelpItem('🔊', 'جواب سننے کے لیے سپیکر آئیکن پر کلک کریں'),
                 _buildHelpItem('🌾', 'گندم کی بیماریوں کے بارے میں پوچھیں'),
                 _buildHelpItem('📱', 'آواز کے لیے مائیکروفون کی اجازت دیں'),
                 _buildHelpItem('💬', 'صاف اور مختصر پیغام لکھیں'),
+                if (!_ttsAvailable) _buildHelpItem('ℹ️', 'آواز کا نظام دستیاب نہیں ہے'),
               ],
             ),
           ),
