@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:agri_vision/src/presentation/AppConstant/user_session.dart';
+import 'package:agri_vision/src/presentation/controllers/history_controller.dart';
 import 'package:agri_vision/src/presentation/screens/Detection_Module/CropScanScreen.dart';
 import 'package:agri_vision/src/presentation/screens/Detection_Module/resultScreen.dart';
 import 'package:agri_vision/src/presentation/screens/Drone_Module/DroneBookingConfirmationScreen.dart';
@@ -15,6 +16,8 @@ import 'package:agri_vision/src/presentation/screens/flow/splash_Screen.dart';
 import 'package:agri_vision/src/presentation/screens/flow/user_Information.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -24,7 +27,7 @@ Future<void> main() async {
   await Firebase.initializeApp();
     final prefs = await SharedPreferences.getInstance();
   String? savedUid = prefs.getString('userId');
-
+Get.put(HistoryController());
   if (savedUid != null) {
     UserSession.uid = savedUid; // ✅ globally save
   }

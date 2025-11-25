@@ -1,4 +1,4 @@
-// // ignore: file_names
+// ignore: file_names
 // ignore: file_names
 import 'dart:io';
 import 'package:agri_vision/src/presentation/screens/Detection_Module/resultScreen.dart';
@@ -6,6 +6,8 @@ import 'package:agri_vision/src/presentation/widgets/custom_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:agri_vision/src/presentation/controllers/history_controller.dart';
+import 'package:agri_vision/src/data/models/history_model.dart';
 
 class CropScanScreen extends StatefulWidget {
   const CropScanScreen({super.key});
@@ -19,6 +21,7 @@ class _CropScanScreenState extends State<CropScanScreen> {
   final ImagePicker _picker = ImagePicker();
   bool _isLoading = false;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final HistoryController _historyController = Get.find<HistoryController>();
 
   // Simulate API call
   Future<void> _analyzeImage() async {
@@ -51,12 +54,24 @@ class _CropScanScreenState extends State<CropScanScreen> {
       'confidence': '85%',
     };
 
-    Get.to(() => DetectionResultScreen(
-      imageFile: _selectedImage!, // Pass the actual selected image file
+    // Create history record
+    final history = DetectionHistory(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      imageFile: _selectedImage!,
       diseaseName: dummyResponse['diseaseName']!,
       description: dummyResponse['description']!,
       recommendation: dummyResponse['recommendation']!,
-      // confidence: dummyResponse['confidence']!,
+      timestamp: DateTime.now(),
+    );
+
+    // Add to history
+    _historyController.addToHistory(history);
+
+    Get.to(() => DetectionResultScreen(
+      imageFile: _selectedImage!,
+      diseaseName: dummyResponse['diseaseName']!,
+      description: dummyResponse['description']!,
+      recommendation: dummyResponse['recommendation']!,
     ));
   }
 
@@ -166,12 +181,12 @@ class _CropScanScreenState extends State<CropScanScreen> {
         key: _scaffoldKey,
         backgroundColor: const Color(0xFFFDF8E3),
         appBar: AppBar(
-          backgroundColor: const Color(0xFFFDF8E3), // Same as screen background
-          elevation: 0, // Remove shadow
+          backgroundColor: const Color(0xFFFDF8E3),
+          elevation: 0,
           leading: IconButton(
             icon: const Icon(
               Icons.menu,
-              color: Color(0xFF02A96C), // Green color to match the theme
+              color: Color(0xFF02A96C),
               size: 28,
             ),
             onPressed: () {
@@ -183,12 +198,11 @@ class _CropScanScreenState extends State<CropScanScreen> {
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF02A96C), // Green color
+              color: Color(0xFF02A96C),
             ),
           ),
           centerTitle: true,
           actions: [
-            // Clear image button when image is selected
             if (_selectedImage != null)
               IconButton(
                 icon: const Icon(
@@ -209,7 +223,7 @@ class _CropScanScreenState extends State<CropScanScreen> {
             ),
           ],
         ),
-        drawer: const CustomDrawer(), // Using the separated drawer widget
+        drawer: const CustomDrawer(), // History option is now in the drawer
         body: Stack(
           children: [
             // Background decoration
