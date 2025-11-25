@@ -35,6 +35,7 @@ class _ChatbotState extends State<Chatbot> {
   bool _isLoading = false;
   bool _initialMessageSent = false;
   bool _ttsAvailable = false;
+  String _currentTTSLocale = "en-US"; // Default to English
 
   // Chatbot responses - Replace with actual API calls
   final Map<String, String> _botResponses = {
@@ -87,7 +88,6 @@ class _ChatbotState extends State<Chatbot> {
 
   Future<void> _initTTS() async {
     try {
-      // Initialize TTS engine
       await _flutterTts.setSharedInstance(true);
       await _flutterTts.awaitSpeakCompletion(true);
       
@@ -95,63 +95,170 @@ class _ChatbotState extends State<Chatbot> {
       final languages = await _flutterTts.getLanguages;
       print("Available TTS languages: $languages");
       
-      // Try to set Urdu language - use different possible locale codes
-      final urduLocales = ["ur-PK", "ur_IN", "ur", "urd", "ur-PK-u-nu-latn"];
+      // Enhanced Urdu locale detection
+      final urduLocales = ["ur-PK", "ur-PK-u-nu-latn", "ur_IN", "ur", "urd"];
       
       String? selectedLocale;
       for (String locale in urduLocales) {
         if (languages.contains(locale)) {
           selectedLocale = locale;
+          print("Found Urdu locale: $selectedLocale");
           break;
         }
       }
       
-      // If Urdu not available, try English or use default
+      // If Urdu not found, guide user to install it
       if (selectedLocale == null) {
+        print("Urdu TTS not available on this device");
+        
+        // Check for English as fallback
         if (languages.contains("en-US")) {
           selectedLocale = "en-US";
-          print("Urdu not available, using English instead");
+          print("Using English as fallback: $selectedLocale");
+          
+          // Show informative message to user
+          _showCustomSnackbar(
+            'اردو آواز دستیاب نہیں',
+            'براہ کرم اپنے فون میں اردو زبان کا پیک انسٹال کریں۔ فی الحال انگریزی میں بول رہا ہوں۔',
+            Colors.orange,
+            Icons.language,
+          );
         } else if (languages.isNotEmpty) {
           selectedLocale = languages.first;
-          print("Using default language: $selectedLocale");
+          print("Using default system language: $selectedLocale");
         }
+      } else {
+        print("Urdu TTS configured successfully with: $selectedLocale");
       }
       
       if (selectedLocale != null) {
         await _flutterTts.setLanguage(selectedLocale);
-        print("TTS set to: $selectedLocale");
+        
+        // Optimize settings for Urdu/English
+        await _flutterTts.setSpeechRate(0.45); // Slower for better clarity
+        await _flutterTts.setPitch(1.0);
+        await _flutterTts.setVolume(1.0);
+        
         setState(() {
           _ttsAvailable = true;
+          _currentTTSLocale = selectedLocale!;
         });
       } else {
-        print("No TTS languages available");
+        print("No TTS languages available on this device");
         setState(() {
           _ttsAvailable = false;
         });
       }
-      
-      // Configure TTS settings for better Urdu/English compatibility
-      await _flutterTts.setSpeechRate(0.5);
-      await _flutterTts.setPitch(1.0);
-      await _flutterTts.setVolume(1.0);
-      
-      // Set engine parameters for better compatibility
-      await _flutterTts.setIosAudioCategory(
-        IosTextToSpeechAudioCategory.playback,
-        [
-          IosTextToSpeechAudioCategoryOptions.allowBluetooth,
-          IosTextToSpeechAudioCategoryOptions.allowBluetoothA2DP,
-          IosTextToSpeechAudioCategoryOptions.mixWithOthers,
-        ],
-      );
       
     } catch (e) {
       print("TTS Initialization Error: $e");
       setState(() {
         _ttsAvailable = false;
       });
-      _showRTLsnackbar('تنبہہ', 'آواز کا نظام دستیاب نہیں ہے', Colors.orange);
+      _showCustomSnackbar('خرابی', 'آواز کا نظام شروع کرنے میں مسئلہ ہوا', Colors.red, Icons.error);
     }
+  }
+
+  void _showUrduInstallGuide() {
+    Get.dialog(
+      Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          title: Text(
+            'اردو آواز کی تنصیب',
+            style: GoogleFonts.vazirmatn(
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFF02A96C),
+            ),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'اپنے فون میں اردو زبان کا آوازی پیک انسٹال کرنے کے لیے:',
+                  style: GoogleFonts.vazirmatn(fontSize: 14),
+                ),
+                const SizedBox(height: 16),
+                _buildInstallStep('1', 'Settings > Language & Input پر جائیں'),
+                _buildInstallStep('2', 'Text-to-Speech Output منتخب کریں'),
+                _buildInstallStep('3', 'Google Text-to-Speech انسٹال کریں'),
+                _buildInstallStep('4', 'Languages میں اردو ڈاؤن لوڈ کریں'),
+                const SizedBox(height: 16),
+                Text(
+                  'یا Google Text-to-Speech ایپ ڈاؤن لوڈ کریں اور اردو زبان پیک شامل کریں۔',
+                  style: GoogleFonts.vazirmatn(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(),
+              child: Text(
+                'بند کریں',
+                style: GoogleFonts.vazirmatn(
+                  color: const Color(0xFF02A96C),
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                Get.back();
+                // Open device settings
+                openAppSettings();
+              },
+              child: Text(
+                'سیٹنگز کھولیں',
+                style: GoogleFonts.vazirmatn(
+                  color: const Color(0xFF02A96C),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInstallStep(String number, String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 24,
+            height: 24,
+            decoration: BoxDecoration(
+              color: const Color(0xFF02A96C),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(
+                number,
+                style: GoogleFonts.vazirmatn(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              text,
+              style: GoogleFonts.vazirmatn(fontSize: 13),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _initSTT() async {
@@ -174,40 +281,58 @@ class _ChatbotState extends State<Chatbot> {
     }
   }
 
-  // Custom RTL Snackbar function
-  void _showRTLsnackbar(String title, String message, Color backgroundColor) {
-    Get.snackbar(
-      title,
-      message,
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: backgroundColor,
-      colorText: Colors.white,
-      borderRadius: 12,
-      margin: const EdgeInsets.all(16),
-      duration: const Duration(seconds: 3),
-      isDismissible: true,
-      dismissDirection: DismissDirection.horizontal,
-      forwardAnimationCurve: Curves.easeOutCubic,
-      reverseAnimationCurve: Curves.easeInCubic,
-      messageText: Directionality(
-        textDirection: TextDirection.rtl,
-        child: Text(
-          message,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
+  // Enhanced RTL Snackbar function with proper right alignment
+  void _showCustomSnackbar(String title, String message, Color backgroundColor, IconData icon) {
+    Get.showSnackbar(
+      GetSnackBar(
+        titleText: Directionality(
+          textDirection: TextDirection.rtl,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Icon(icon, color: Colors.white, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  title,
+                  textAlign: TextAlign.right,
+                  style: GoogleFonts.vazirmatn(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-      ),
-      titleText: Directionality(
-        textDirection: TextDirection.rtl,
-        child: Text(
-          title,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
+        messageText: Directionality(
+          textDirection: TextDirection.rtl,
+          child: Text(
+            message,
+            textAlign: TextAlign.right,
+            style: GoogleFonts.vazirmatn(
+              color: Colors.white,
+              fontSize: 14,
+            ),
+          ),
+        ),
+        backgroundColor: backgroundColor,
+        duration: const Duration(seconds: 4),
+        snackPosition: SnackPosition.BOTTOM,
+        borderRadius: 12,
+        margin: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        animationDuration: const Duration(milliseconds: 300),
+        forwardAnimationCurve: Curves.easeOutCubic,
+        reverseAnimationCurve: Curves.easeInCubic,
+        isDismissible: true,
+        dismissDirection: DismissDirection.horizontal,
+        icon: Directionality(
+          textDirection: TextDirection.rtl,
+          child: IconButton(
+            icon: const Icon(Icons.close, color: Colors.white, size: 20),
+            onPressed: () => Get.back(),
           ),
         ),
       ),
@@ -274,24 +399,35 @@ class _ChatbotState extends State<Chatbot> {
 
   Future<void> _speak(String text) async {
     if (!_ttsAvailable) {
-      _showRTLsnackbar('تنبہہ', 'آواز کا نظام دستیاب نہیں ہے', Colors.orange);
+      _showUrduInstallGuide();
       return;
     }
 
     try {
-      if (text.isNotEmpty) {
-        // Stop any ongoing speech
-        await _flutterTts.stop();
-        
-        // Speak the text
+      await _flutterTts.stop();
+      
+      // Check if we're using Urdu or English
+      bool isUsingUrdu = _currentTTSLocale.contains("ur");
+      
+      if (isUsingUrdu && text.isNotEmpty) {
         await _flutterTts.speak(text);
-        
-        // Show speaking indicator
-        _showRTLsnackbar('آواز', 'جواب سنایا جا رہا ہے', Colors.blue);
+        _showCustomSnackbar('آواز', 'جواب سنایا جا رہا ہے', Colors.blue, Icons.volume_up);
+      } else {
+        // Using English fallback
+        await _flutterTts.speak(text);
+        _showCustomSnackbar('Voice', 'Playing response in English', Colors.blue, Icons.volume_up);
       }
+      
     } catch (e) {
       print("TTS Error: $e");
-      _showRTLsnackbar('خرابی', 'آواز چلانے میں مسئلہ ہوا', Colors.red);
+      
+      // Show installation guide on TTS failure
+      if (e.toString().contains("not available") || 
+          e.toString().contains("language")) {
+        _showUrduInstallGuide();
+      } else {
+        _showCustomSnackbar('خرابی', 'آواز چلانے میں مسئلہ ہوا', Colors.red, Icons.error);
+      }
     }
   }
 
@@ -299,12 +435,12 @@ class _ChatbotState extends State<Chatbot> {
   void _startListening() async {
     final hasPermission = await _checkPermissions();
     if (!hasPermission) {
-      _showRTLsnackbar('اجازت درکار', 'مائیکروفون کی اجازت درکار ہے', Colors.red);
+      _showCustomSnackbar('اجازت درکار', 'مائیکروفون کی اجازت درکار ہے', Colors.red, Icons.mic_off);
       return;
     }
 
     if (!_sttAvailable) {
-      _showRTLsnackbar('خرابی', 'آواز کی پہچان دستیاب نہیں ہے', Colors.red);
+      _showCustomSnackbar('خرابی', 'آواز کی پہچان دستیاب نہیں ہے', Colors.red, Icons.error);
       return;
     }
 
@@ -330,7 +466,7 @@ class _ChatbotState extends State<Chatbot> {
     } catch (e) {
       print("Listening Error: $e");
       setState(() => _isListening = false);
-      _showRTLsnackbar('خرابی', 'آواز سننے میں مسئلہ ہوا', Colors.red);
+      _showCustomSnackbar('خرابی', 'آواز سننے میں مسئلہ ہوا', Colors.red, Icons.error);
     }
   }
 
@@ -399,6 +535,8 @@ class _ChatbotState extends State<Chatbot> {
 
   @override
   Widget build(BuildContext context) {
+    bool isUrduTTS = _currentTTSLocale.contains("ur");
+
     return Scaffold(
       backgroundColor: const Color(0xFFFDF8E3), // Same as CropScanScreen
       appBar: AppBar(
@@ -411,22 +549,39 @@ class _ChatbotState extends State<Chatbot> {
           ),
           onPressed: () => Get.back(),
         ),
-        title: Text(
-          'گندم کی بیماریوں کی معلومات',
-          style: GoogleFonts.vazirmatn(
-            fontWeight: FontWeight.bold,
-            color: const Color(0xFF02A96C),
-            fontSize: 20,
-          ),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'گندم کی بیماریوں کی معلومات',
+              style: GoogleFonts.vazirmatn(
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFF02A96C),
+                fontSize: 20,
+              ),
+            ),
+            if (!isUrduTTS && _ttsAvailable) ...[
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: Colors.orange,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  'EN',
+                  style: GoogleFonts.vazirmatn(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ],
         ),
         centerTitle: true,
         actions: [
-          // // TTS status indicator
-          // Icon(
-          //   _ttsAvailable ? Icons.volume_up : Icons.volume_off,
-          //   color: _ttsAvailable ? const Color(0xFF02A96C) : Colors.grey,
-          // ),
-          const SizedBox(width: 8),
           IconButton(
             icon: const Icon(Icons.info_outline, color: Color(0xFF02A96C)),
             onPressed: () {
@@ -437,10 +592,46 @@ class _ChatbotState extends State<Chatbot> {
       ),
       body: Column(
         children: [
+          // Language Indicator
+          if (!isUrduTTS && _ttsAvailable)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              color: Colors.orange.withAlpha(30),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.info, color: Colors.orange, size: 16),
+                  const SizedBox(width: 8),
+                  Text(
+                    'اردو آواز دستیاب نہیں - انگریزی میں بول رہا ہوں',
+                    style: GoogleFonts.vazirmatn(
+                      fontSize: 12,
+                      color: Colors.orange[800],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: _showUrduInstallGuide,
+                    child: Text(
+                      'انسٹال کریں',
+                      style: GoogleFonts.vazirmatn(
+                        fontSize: 12,
+                        color: const Color(0xFF02A96C),
+                        fontWeight: FontWeight.bold,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
           // Messages List
           Expanded(
             child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16),
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
@@ -481,7 +672,8 @@ class _ChatbotState extends State<Chatbot> {
 
   Widget _buildMessageBubble(Message message) {
     final isUser = message.sender == 'user';
-    
+    bool isUrduTTS = _currentTTSLocale.contains("ur");
+
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -496,7 +688,26 @@ class _ChatbotState extends State<Chatbot> {
                 color: Color(0xFF02A96C),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.agriculture, color: Colors.white, size: 18),
+              child: Stack(
+                children: [
+                  const Icon(Icons.agriculture, color: Colors.white, size: 18),
+                  if (!isUrduTTS)
+                    Positioned(
+                      top: 0,
+                      right: 0,
+                      child: Container(
+                        width: 12,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          color: Colors.orange,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 1),
+                        ),
+                        child: const Icon(Icons.language, size: 8, color: Colors.white),
+                      ),
+                    ),
+                ],
+              ),
             ),
             const SizedBox(width: 8),
           ],
@@ -524,7 +735,11 @@ class _ChatbotState extends State<Chatbot> {
                     children: [
                       if (!isUser && _ttsAvailable)
                         IconButton(
-                          icon: const Icon(Icons.volume_up, size: 18, color: Color(0xFF02A96C)),
+                          icon: Icon(
+                            Icons.volume_up, 
+                            size: 18, 
+                            color: isUrduTTS ? const Color(0xFF02A96C) : Colors.orange
+                          ),
                           onPressed: () => _speak(message.text),
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(
@@ -557,7 +772,11 @@ class _ChatbotState extends State<Chatbot> {
                       ),
                       if (isUser && _ttsAvailable)
                         IconButton(
-                          icon: const Icon(Icons.volume_up, size: 18, color: Colors.white),
+                          icon: Icon(
+                            Icons.volume_up, 
+                            size: 18, 
+                            color: isUser ? Colors.white70 : const Color(0xFF02A96C)
+                          ),
                           onPressed: () => _speak(message.text),
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(
@@ -743,11 +962,23 @@ class _ChatbotState extends State<Chatbot> {
                 _buildHelpItem('🌾', 'گندم کی بیماریوں کے بارے میں پوچھیں'),
                 _buildHelpItem('📱', 'آواز کے لیے مائیکروفون کی اجازت دیں'),
                 _buildHelpItem('💬', 'صاف اور مختصر پیغام لکھیں'),
-                if (!_ttsAvailable) _buildHelpItem('ℹ️', 'آواز کا نظام دستیاب نہیں ہے'),
+                if (!_currentTTSLocale.contains("ur")) 
+                  _buildHelpItem('🌐', 'اردو آواز کے لیے زبان پیک انسٹال کریں'),
               ],
             ),
           ),
           actions: [
+            if (!_currentTTSLocale.contains("ur"))
+              TextButton(
+                onPressed: _showUrduInstallGuide,
+                child: Text(
+                  'اردو انسٹال کریں',
+                  style: GoogleFonts.vazirmatn(
+                    color: Colors.orange,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
             TextButton(
               onPressed: () => Get.back(),
               child: Text(
