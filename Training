@@ -1,0 +1,40 @@
+import os
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.utils.data import Dataset, DataLoader
+from torchvision import transforms
+from PIL import Image
+from tqdm import tqdm
+from sklearn.metrics import confusion_matrix, classification_report
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Auto-install timm if missing
+try:
+    import timm
+except ImportError:
+    os.system('pip install timm')
+    import timm
+
+# --- CONFIGURATION (Yahan Changes Hain) ---
+CONFIG = {
+    # Aapka Naya Path
+    "DATA_DIR": "/kaggle/input/wheat-diseases-dataset/Wheat_Diseases_Dataset",
+    
+    # Model: Medium (Best balance)
+    "MODEL_NAME": "tf_efficientnetv2_m.in1k",
+    
+    # Image Size: 384 (Disease detection ke liye high res behtar hai)
+    "IMG_SIZE": 384,
+    
+    "BATCH_SIZE": 16,  # 384 size ke sath batch chota rakhna padega taake GPU full na ho
+    "LEARNING_RATE": 1e-4,
+    "EPOCHS": 15,      # 15 Epochs kaafi honge
+    "NUM_WORKERS": 2,
+    "DEVICE": "cuda" if torch.cuda.is_available() else "cpu"
+}
+
+print(f"Model Selected: {CONFIG['MODEL_NAME']} on {CONFIG['DEVICE']}")
+print(f"Dataset Path: {CONFIG['DATA_DIR']}")
