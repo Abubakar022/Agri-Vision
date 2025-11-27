@@ -1,5 +1,6 @@
 // lib/src/data/models/history_model.dart
 import 'dart:io';
+
 class DetectionHistory {
   final String id;
   final File imageFile;
@@ -7,6 +8,9 @@ class DetectionHistory {
   final String description;
   final String recommendation;
   final DateTime timestamp;
+  
+  // 1. Yahan humne field add kiya hai
+  final String confidence; 
 
   DetectionHistory({
     required this.id,
@@ -15,6 +19,9 @@ class DetectionHistory {
     required this.description,
     required this.recommendation,
     required this.timestamp,
+    
+    // 2. 'this.confidence' likha hai taake ye save ho sake
+    required this.confidence, 
   });
 
   // Convert to map for storage
@@ -26,6 +33,9 @@ class DetectionHistory {
       'description': description,
       'recommendation': recommendation,
       'timestamp': timestamp.millisecondsSinceEpoch,
+      
+      // 3. Map mein save kar rahe hain
+      'confidence': confidence, 
     };
   }
 
@@ -38,6 +48,9 @@ class DetectionHistory {
       description: map['description'],
       recommendation: map['recommendation'],
       timestamp: DateTime.fromMillisecondsSinceEpoch(map['timestamp']),
+      
+      // 4. Map se wapis nikaal kar pass kar rahe hain (Fixing the Error)
+      confidence: map['confidence'] ?? "N/A", 
     );
   }
 }

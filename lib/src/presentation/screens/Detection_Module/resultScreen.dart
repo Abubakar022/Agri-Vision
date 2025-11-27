@@ -9,6 +9,9 @@ class DetectionResultScreen extends StatelessWidget {
   final String diseaseName;
   final String description;
   final String recommendation;
+  final String confidence;
+  final String status;
+  final String colorCode;
 
   const DetectionResultScreen({
     super.key,
@@ -16,7 +19,62 @@ class DetectionResultScreen extends StatelessWidget {
     required this.diseaseName,
     required this.description,
     required this.recommendation,
+    this.confidence = '0%',
+    this.status = 'success',
+    this.colorCode = '#008000',
   });
+
+  Color _getStatusColor() {
+    switch (status) {
+      case 'success':
+        return const Color(0xFF02A96C);
+      case 'unsure':
+        return const Color(0xFFFFA726);
+      case 'rejected':
+        return const Color(0xFFF44336);
+      default:
+        return const Color(0xFF02A96C);
+    }
+  }
+
+  String _getStatusTitle() {
+    switch (status) {
+      case 'success':
+        return "تشخیص مکمل ہو گئی";
+      case 'unsure':
+        return "تصویر واضح نہیں";
+      case 'rejected':
+        return "انتباہ";
+      default:
+        return "تشخیص مکمل ہو گئی";
+    }
+  }
+
+  String _getStatusSubtitle() {
+    switch (status) {
+      case 'success':
+        return "آپ کے پودے کی مکمل تشخیص کی گئی ہے";
+      case 'unsure':
+        return "تصویر کی وضاحت درکار ہے";
+      case 'rejected':
+        return "براہ کرم مناسب تصویر اپلوڈ کریں";
+      default:
+        return "آپ کے پودے کی مکمل تشخیص کی گئی ہے";
+    }
+  }
+
+  IconData _getStatusIcon() {
+    switch (status) {
+      case 'success':
+        return Icons.verified;
+      case 'unsure':
+        return Icons.image_rounded;
+      case 'rejected':
+        return Icons.warning_amber;
+      default:
+        return Icons.verified;
+    }
+  }
 
   void _showCustomSnackbar(String title, String message, Color color, IconData icon) {
     Get.showSnackbar(
@@ -70,20 +128,20 @@ class DetectionResultScreen extends StatelessWidget {
   // Disease to Urdu prompt mapping
   String _getDiseasePrompt(String diseaseName) {
     final promptMap = {
-      'ایفڈ': 'ایفڈ (Aphids) کے بارے میں مزید معلومات درکار ہیں',
-      'کالی زنگ': 'کالی زنگ (Black Rust) کی بیماری کے بارے میں رہنمائی چاہیے',
-      'بلاسٹ': 'بلاسٹ بیماری کی علامات اور علاج بتائیں',
-      'بھوری زنگ': 'بھوری زنگ (Brown Rust) کے تدارک کے طریقے',
-      'فیوزیریم ہیڈ بلائٹ': 'فیوزیریم ہیڈ بلائٹ کی تشخیص اور کنٹرول',
-      'پتوں کا بلائٹ': 'پتوں کے بلائٹ کی وجوہات اور علاج',
-      'پھپھوندی (ملڈیو)': 'پھپھوندی یا ملڈیو کے مسائل اور حل',
-      'مائٹ': 'مائٹ کے حملے اور ان کا تدارک',
-      'سیپٹوریا': 'سیپٹوریا بیماری کی تفصیلات',
-      'کھنڈ بیماری (سماٹ)': 'کھنڈ بیماری یا سماٹ کے بارے میں معلومات',
-      'تنا مکھی': 'تنا مکھی کے حملے اور روک تھام',
-      'ٹین اسپاٹ': 'ٹین اسپاٹ کی بیماری کی علامات',
-      'پیلی زنگ': 'پیلی زنگ (Yellow Rust) کا علاج اور بچاؤ',
-      'پتوں کا زنگ': 'پتوں کے زنگ کی بیماری کے بارے میں مزید معلومات درکار ہیں',
+      'سست تیلہ (Aphid)': 'ایفڈ (Aphids) کے بارے میں مزید معلومات درکار ہیں',
+      'کالی کنگی (Stem Rust)': 'کالی زنگ (Black Rust) کی بیماری کے بارے میں رہنمائی چاہیے',
+      'گندم کا بلاسٹ (Wheat Blast)': 'بلاسٹ بیماری کی علامات اور علاج بتائیں',
+      'بھوری کنگی (Leaf Rust)': 'بھوری زنگ (Brown Rust) کے تدارک کے طریقے',
+      'سٹے کا جھلسنا (Fusarium)': 'فیوزیریم ہیڈ بلائٹ کی تشخیص اور کنٹرول',
+      'صحت مند (Healthy)': 'صحت مند فصل کی دیکھ بھال کے بارے میں رہنمائی',
+      'پتوں کا جھلسنا (Leaf Blight)': 'پتوں کے بلائٹ کی وجوہات اور علاج',
+      'سفوفی پھپھوندی (Powdery Mildew)': 'پھپھوندی یا ملڈیو کے مسائل اور حل',
+      'جوئیں (Wheat Mite)': 'مائٹ کے حملے اور ان کا تدارک',
+      'سپٹوریا (Leaf Blotch)': 'سیپٹوریا بیماری کی تفصیلات',
+      'کانگیاری (Loose Smut)': 'کھنڈ بیماری یا سماٹ کے بارے میں معلومات',
+      'تنے کی مکھی (Stem Fly)': 'تنا مکھی کے حملے اور روک تھام',
+      'ٹین سپاٹ (Tan Spot)': 'ٹین سپاٹ کی بیماری کی علامات',
+      'زرد کنگی (Yellow Rust)': 'پیلی زنگ (Yellow Rust) کا علاج اور بچاؤ',
     };
     
     return promptMap[diseaseName] ?? '$diseaseName کے بارے میں مزید معلومات درکار ہیں';
@@ -110,6 +168,8 @@ class DetectionResultScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final statusColor = _getStatusColor();
+    
     return Scaffold(
       backgroundColor: const Color(0xFFFDF8E3),
       appBar: AppBar(
@@ -147,7 +207,7 @@ class DetectionResultScreen extends StatelessWidget {
                 width: 200,
                 height: 200,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF02A96C).withAlpha(26),
+                  color: statusColor.withAlpha(26),
                   shape: BoxShape.circle,
                 ),
               ),
@@ -174,15 +234,15 @@ class DetectionResultScreen extends StatelessWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF02A96C), Color(0xFF00C853)],
+                      gradient: LinearGradient(
+                        colors: [statusColor, statusColor.withOpacity(0.8)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.green.withAlpha(75),
+                          color: statusColor.withAlpha(75),
                           blurRadius: 15,
                           offset: const Offset(0, 5),
                         ),
@@ -190,14 +250,14 @@ class DetectionResultScreen extends StatelessWidget {
                     ),
                     child: Column(
                       children: [
-                        const Icon(
-                          Icons.verified,
+                        Icon(
+                          _getStatusIcon(),
                           size: 40,
                           color: Colors.white,
                         ),
                         const SizedBox(height: 10),
                         Text(
-                          "تشخیص مکمل ہو گئی",
+                          _getStatusTitle(),
                           textAlign: TextAlign.center,
                           style: GoogleFonts.vazirmatn(
                             fontSize: 22,
@@ -207,13 +267,31 @@ class DetectionResultScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 5),
                         Text(
-                          "آپ کے پودے کی مکمل تشخیص کی گئی ہے",
+                          _getStatusSubtitle(),
                           textAlign: TextAlign.center,
                           style: GoogleFonts.vazirmatn(
                             fontSize: 14,
                             color: Colors.white70,
                           ),
                         ),
+                        if (status == 'success') ...[
+                          const SizedBox(height: 10),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              "اعتماد: $confidence",
+                              style: GoogleFonts.vazirmatn(
+                                fontSize: 12,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -241,7 +319,7 @@ class DetectionResultScreen extends StatelessWidget {
                           width: double.infinity,
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF02A96C).withAlpha(10),
+                            color: statusColor.withAlpha(10),
                             borderRadius: const BorderRadius.only(
                               topLeft: Radius.circular(20),
                               topRight: Radius.circular(20),
@@ -254,12 +332,12 @@ class DetectionResultScreen extends StatelessWidget {
                                   Container(
                                     padding: const EdgeInsets.all(8),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF02A96C).withAlpha(20),
+                                      color: statusColor.withAlpha(20),
                                       shape: BoxShape.circle,
                                     ),
-                                    child: const Icon(
+                                    child: Icon(
                                       Icons.photo_library,
-                                      color: Color(0xFF02A96C),
+                                      color: statusColor,
                                       size: 20,
                                     ),
                                   ),
@@ -269,7 +347,7 @@ class DetectionResultScreen extends StatelessWidget {
                                     style: GoogleFonts.vazirmatn(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
-                                      color: const Color(0xFF02A96C),
+                                      color: statusColor,
                                     ),
                                   ),
                                 ],
@@ -289,16 +367,16 @@ class DetectionResultScreen extends StatelessWidget {
                                       child: Column(
                                         mainAxisAlignment: MainAxisAlignment.center,
                                         children: [
-                                          const Icon(
+                                          Icon(
                                             Icons.error_outline,
-                                            color: Colors.red,
+                                            color: statusColor,
                                             size: 50,
                                           ),
                                           const SizedBox(height: 10),
                                           Text(
                                             "تصویر لوڈ نہیں ہو سکی",
                                             style: GoogleFonts.vazirmatn(
-                                              color: Colors.red,
+                                              color: statusColor,
                                               fontSize: 16,
                                             ),
                                           ),
@@ -320,243 +398,343 @@ class DetectionResultScreen extends StatelessWidget {
                           ),
                         ),
 
-                        // Results Section
-                        Padding(
-                          padding: const EdgeInsets.all(20),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Disease Name
-                              Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFF02A96C).withAlpha(20),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(
-                                      Icons.medical_services,
-                                      color: Color(0xFF02A96C),
-                                      size: 20,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Text(
-                                      "بیماری کی تشخیص",
-                                      style: GoogleFonts.vazirmatn(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: const Color(0xFF02A96C),
+                        // Results Section - Only show for success case
+                        if (status == 'success') ...[
+                          Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Disease Name
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: statusColor.withAlpha(20),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        Icons.medical_services,
+                                        color: statusColor,
+                                        size: 20,
                                       ),
                                     ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        "بیماری کی تشخیص",
+                                        style: GoogleFonts.vazirmatn(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: statusColor,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: statusColor.withAlpha(10),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: statusColor.withAlpha(50),
+                                    ),
                                   ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF02A96C).withAlpha(10),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: const Color(0xFF02A96C).withAlpha(50),
+                                  child: Column(
+                                    children: [
+                                      Text(
+                                        diseaseName,
+                                        textAlign: TextAlign.center,
+                                        style: GoogleFonts.vazirmatn(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                          color: statusColor,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        "اعتماد: $confidence",
+                                        textAlign: TextAlign.center,
+                                        style: GoogleFonts.vazirmatn(
+                                          fontSize: 14,
+                                          color: statusColor.withOpacity(0.8),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                child: Text(
-                                  diseaseName,
+
+                                const SizedBox(height: 20),
+
+                                // Description
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: statusColor.withAlpha(20),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        Icons.description,
+                                        color: statusColor,
+                                        size: 20,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      "بیماری کی تفصیل",
+                                      style: GoogleFonts.vazirmatn(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: statusColor,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFDF8E3),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: statusColor.withAlpha(30),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    description,
+                                    style: GoogleFonts.vazirmatn(
+                                      fontSize: 14,
+                                      color: Colors.black87,
+                                      height: 1.6,
+                                    ),
+                                  ),
+                                ),
+
+                                const SizedBox(height: 20),
+
+                                // Recommendation
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFFFA726).withAlpha(20),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.lightbulb,
+                                        color: Color(0xFFFFA726),
+                                        size: 20,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      "تجاویز اور حل",
+                                      style: GoogleFonts.vazirmatn(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: const Color(0xFFFFA726),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFFA726).withAlpha(10),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: const Color(0xFFFFA726).withAlpha(30),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    recommendation,
+                                    style: GoogleFonts.vazirmatn(
+                                      fontSize: 14,
+                                      color: Colors.black87,
+                                      height: 1.6,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ] else ...[
+                          // Warning/Error Message for non-success cases
+                          Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: Column(
+                              children: [
+                                Icon(
+                                  _getStatusIcon(),
+                                  size: 60,
+                                  color: statusColor,
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  _getStatusTitle(),
                                   textAlign: TextAlign.center,
                                   style: GoogleFonts.vazirmatn(
                                     fontSize: 20,
                                     fontWeight: FontWeight.bold,
-                                    color: const Color(0xFF02A96C),
+                                    color: statusColor,
                                   ),
                                 ),
-                              ),
-
-                              const SizedBox(height: 20),
-
-                              // Description
-                              Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFF02A96C).withAlpha(20),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(
-                                      Icons.description,
-                                      color: Color(0xFF02A96C),
-                                      size: 20,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Text(
-                                    "بیماری کی تفصیل",
-                                    style: GoogleFonts.vazirmatn(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: const Color(0xFF02A96C),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFFDF8E3),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: const Color(0xFF02A96C).withAlpha(30),
-                                  ),
-                                ),
-                                child: Text(
+                                const SizedBox(height: 12),
+                                Text(
                                   description,
+                                  textAlign: TextAlign.center,
                                   style: GoogleFonts.vazirmatn(
                                     fontSize: 14,
                                     color: Colors.black87,
                                     height: 1.6,
                                   ),
                                 ),
-                              ),
-
-                              const SizedBox(height: 20),
-
-                              // Recommendation
-                              Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFFFA726).withAlpha(20),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(
-                                      Icons.lightbulb,
-                                      color: Color(0xFFFFA726),
-                                      size: 20,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
+                                const SizedBox(height: 20),
+                                if (status == 'unsure') 
                                   Text(
-                                    "تجاویز اور حل",
+                                    "اعتماد: $confidence",
                                     style: GoogleFonts.vazirmatn(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: const Color(0xFFFFA726),
+                                      fontSize: 14,
+                                      color: statusColor,
+                                      fontWeight: FontWeight.w500,
                                     ),
                                   ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFFFA726).withAlpha(10),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: const Color(0xFFFFA726).withAlpha(30),
-                                  ),
-                                ),
-                                child: Text(
-                                  recommendation,
-                                  style: GoogleFonts.vazirmatn(
-                                    fontSize: 14,
-                                    color: Colors.black87,
-                                    height: 1.6,
-                                  ),
-                                ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
+                        ],
                       ],
                     ),
                   ),
 
                   const SizedBox(height: 30),
 
-                  // 🟢 Ask AI Button
-                  Container(
-                    width: double.infinity,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF02A96C), Color(0xFF00C853)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF02A96C).withAlpha(75),
-                          blurRadius: 15,
-                          offset: const Offset(0, 6),
+                  // 🟢 Ask AI Button - Only show for success case
+                  if (status == 'success') ...[
+                    Container(
+                      width: double.infinity,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [statusColor, statusColor.withOpacity(0.8)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
-                      ],
-                    ),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: _navigateToChatbot,
                         borderRadius: BorderRadius.circular(16),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.chat_bubble, color: Colors.white, size: 24),
-                            const SizedBox(width: 12),
-                            Text(
-                              "AI سہولت کار سے مزید معلومات حاصل کریں",
-                              style: GoogleFonts.vazirmatn(
-                                fontSize: 16,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
+                        boxShadow: [
+                          BoxShadow(
+                            color: statusColor.withAlpha(75),
+                            blurRadius: 15,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: _navigateToChatbot,
+                          borderRadius: BorderRadius.circular(16),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.chat_bubble, color: Colors.white, size: 24),
+                              const SizedBox(width: 12),
+                              Text(
+                                "AI سہولت کار سے مزید معلومات حاصل کریں",
+                                style: GoogleFonts.vazirmatn(
+                                  fontSize: 16,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // ℹ️ Info Text
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: const Color(0xFF02A96C).withAlpha(50),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.info,
-                          color: Color(0xFF02A96C),
-                          size: 20,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            "AI سہولت کار آپ کو اس بیماری کے بارے میں مزید تفصیلی معلومات فراہم کرے گا",
-                            style: GoogleFonts.vazirmatn(
-                              fontSize: 12,
-                              color: const Color(0xFF02A96C),
-                            ),
+                            ],
                           ),
                         ),
-                      ],
+                      ),
                     ),
-                  ),
+
+                    const SizedBox(height: 16),
+
+                    // ℹ️ Info Text
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: statusColor.withAlpha(50),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.info,
+                            color: statusColor,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              "AI سہولت کار آپ کو اس بیماری کے بارے میں مزید تفصیلی معلومات فراہم کرے گا",
+                              style: GoogleFonts.vazirmatn(
+                                fontSize: 12,
+                                color: statusColor,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ] else ...[
+                    // Try Again Button for non-success cases
+                    Container(
+                      width: double.infinity,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        color: statusColor,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: statusColor.withAlpha(75),
+                            blurRadius: 15,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () => Get.back(),
+                          borderRadius: BorderRadius.circular(16),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.refresh, color: Colors.white, size: 24),
+                              const SizedBox(width: 12),
+                              Text(
+                                "دوبارہ کوشش کریں",
+                                style: GoogleFonts.vazirmatn(
+                                  fontSize: 16,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

@@ -1,12 +1,15 @@
 // ignore: file_names
 // ignore: file_names
 import 'dart:io';
+import 'dart:convert';
+import 'dart:async';
 import 'package:agri_vision/src/presentation/screens/Detection_Module/resultScreen.dart';
 import 'package:agri_vision/src/presentation/widgets/custom_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
 import 'package:agri_vision/src/presentation/controllers/history_controller.dart';
 import 'package:agri_vision/src/data/models/history_model.dart';
 
@@ -23,6 +26,10 @@ class _CropScanScreenState extends State<CropScanScreen> {
   bool _isLoading = false;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final HistoryController _historyController = Get.find<HistoryController>();
+
+  // API Configuration
+  static const String BASE_URL = "http://192.168.100.25:5000";
+  static const String PREDICT_ENDPOINT = "$BASE_URL/predict";
 
   void _showCustomSnackbar(String title, String message, Color color, IconData icon) {
     Get.showSnackbar(
@@ -73,66 +80,142 @@ class _CropScanScreenState extends State<CropScanScreen> {
     );
   }
 
-  // Simulate API call
-  Future<void> _analyzeImage() async {
-    if (_selectedImage == null) {
-      _showCustomSnackbar(
-        'تصویر منتخب کریں',
-        'براہ کرم پہلے ایک تصویر منتخب کریں',
-        Colors.orange,
-        Icons.warning,
-      );
-      return;
-    }
+  // Real API Call
+ // Real API Call - Optimized Version
+Future<Map<String, dynamic>?> _analyzeImageWithAPI() async {
+  if (_selectedImage == null) {
+    _showCustomSnackbar(
+      'تصویر منتخب کریں',
+      'براہ کرم پہلے ایک تصویر منتخب کریں',
+      Colors.orange,
+      Icons.warning,
+    );
+    return null;
+  }
 
+  setState(() {
+    _isLoading = true;
+  });
+
+  try {
+    // Create multipart request
+    var request = http.MultipartRequest('POST', Uri.parse(PREDICT_ENDPOINT));
+    
+    // Add image file
+    request.files.add(
+      await http.MultipartFile.fromPath(
+        'file',
+        _selectedImage!.path,
+      ),
+    );
+
+    // Send request with timeout
+    var streamedResponse = await request.send().timeout(
+      const Duration(seconds: 30),
+      onTimeout: () => throw TimeoutException('Request timeout'),
+    );
+
+    // Get response
+    var response = await http.Response.fromStream(streamedResponse);
+
+    // Check if request was successful
+    if (response.statusCode == 200) {
+      Map<String, dynamic> apiResponse = json.decode(response.body);
+      return apiResponse;
+    } else if (response.statusCode == 400) {
+      throw "غلط درخواست: براہ کرم تصویر کی شکل چیک کریں";
+    } else if (response.statusCode == 500) {
+      throw "سرور میں مسئلہ: براہ کرم بعد میں کوشش کریں";
+    } else {
+      throw "سرور سے رابطہ نہیں ہو سکا (Error ${response.statusCode})";
+    }
+  } on TimeoutException catch (_) {
+    throw "سرور کا جواب موصول نہیں ہوا۔ براہ کرم دوبارہ کوشش کریں۔";
+  } on SocketException catch (_) {
+    throw "انٹرنیٹ کنکشن دستیاب نہیں ہے۔ براہ کرم اپنا انٹرنیٹ چیک کریں۔";
+  } on http.ClientException catch (e) {
+    throw "نیٹ ورک کنکشن میں مسئلہ: ${e.message}";
+  } on FormatException catch (_) {
+    throw "سرور سے غلط جواب ملا۔ براہ کرم دوبارہ کوشش کریں۔";
+  } catch (e) {
+    throw "تصویر کا تجزیہ کرنے میں مسئلہ ہوا: ${e.toString().split(':').first}";
+  } finally {
     setState(() {
-      _isLoading = true;
+      _isLoading = false;
     });
+  }
+}
 
-    try {
-      // Simulate API delay
-      await Future.delayed(const Duration(seconds: 2));
-
-      // Simulate API response with error handling
-      if (_selectedImage != null) {
-        final dummyResponse = {
-          'diseaseName': "پتوں کا زنگ",
-          'description': "یہ بیماری عام طور پر گندم کے پتوں پر زرد دھبے پیدا کرتی ہے۔",
-          'recommendation': "زرعی ماہر سے مشورہ کریں اور تجویز کردہ اسپرے استعمال کریں۔",
-        };
-
-        // Create history record
-        final history = DetectionHistory(
-          id: DateTime.now().millisecondsSinceEpoch.toString(),
-          imageFile: _selectedImage!,
-          diseaseName: dummyResponse['diseaseName']!,
-          description: dummyResponse['description']!,
-          recommendation: dummyResponse['recommendation']!,
-          timestamp: DateTime.now(),
+  // Handle API Response
+  void _handleAPIResponse(Map<String, dynamic> response) {
+    String status = response['status'] ?? 'unknown';
+    
+    switch (status) {
+      case 'success':
+        _handleSuccessResponse(response);
+        break;
+      
+      case 'unsure':
+        _handleUnsureResponse(response);
+        break;
+      
+      case 'rejected':
+        _handleRejectedResponse(response);
+        break;
+      
+      default:
+        _showCustomSnackbar(
+          'غیر متوقع جواب',
+          'سرور سے غیر متوقع جواب موصول ہوا۔ براہ کرم دوبارہ کوشش کریں۔',
+          Colors.orange,
+          Icons.warning,
         );
-
-        // Add to history
-        _historyController.addToHistory(history);
-
-        Get.to(() => DetectionResultScreen(
-          imageFile: _selectedImage!,
-          diseaseName: dummyResponse['diseaseName']!,
-          description: dummyResponse['description']!,
-          recommendation: dummyResponse['recommendation']!,
-        ));
-      }
-    } catch (e) {
-      _showCustomSnackbar(
-        'تشخیص میں مسئلہ',
-        'تصویر کا تجزیہ کرنے میں مسئلہ ہوا۔ براہ کرم دوبارہ کوشش کریں۔',
-        Colors.red,
-        Icons.error,
-      );
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
     }
+  }
+
+  void _handleSuccessResponse(Map<String, dynamic> response) {
+    // Create history record
+    final history = DetectionHistory(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      imageFile: _selectedImage!,
+      diseaseName: response['disease_name_urdu'] ?? response['class_english'],
+      description: response['description'] ?? 'تفصیل دستیاب نہیں',
+      recommendation: response['solution'] ?? 'زرعی ماہر سے رابطہ کریں',
+      timestamp: DateTime.now(),
+      confidence: response['confidence'] ?? '0%',
+    );
+
+    // Add to history
+    _historyController.addToHistory(history);
+
+    // Navigate to result screen
+    Get.to(() => DetectionResultScreen(
+      imageFile: _selectedImage!,
+      diseaseName: response['disease_name_urdu'] ?? response['class_english'],
+      description: response['description'] ?? 'تفصیل دستیاب نہیں',
+      recommendation: response['solution'] ?? 'زرعی ماہر سے رابطہ کریں',
+      confidence: response['confidence'] ?? '0%',
+      status: 'success',
+      colorCode: response['color_code'] ?? '#008000',
+    ));
+  }
+
+  void _handleUnsureResponse(Map<String, dynamic> response) {
+    _showCustomSnackbar(
+      'تصویر واضح نہیں',
+      response['message'] ?? 'براہ کرم واضح اور فوکسڈ تصویر اپلوڈ کریں۔',
+      Colors.orange,
+      Icons.image,
+    );
+  }
+
+  void _handleRejectedResponse(Map<String, dynamic> response) {
+    _showCustomSnackbar(
+      'انتباہ',
+      response['message'] ?? 'براہ کرم گندم کے متاثرہ حصے کی واضح تصویر اپلوڈ کریں۔',
+      Colors.red,
+      Icons.warning_amber,
+    );
   }
 
   Future<void> _pickImage(ImageSource source) async {
@@ -653,7 +736,12 @@ class _CropScanScreenState extends State<CropScanScreen> {
                               ),
                               child: ElevatedButton(
                                 onPressed: _selectedImage != null
-                                    ? _analyzeImage
+                                    ? () async {
+                                        var response = await _analyzeImageWithAPI();
+                                        if (response != null) {
+                                          _handleAPIResponse(response);
+                                        }
+                                      }
                                     : null,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.transparent,
