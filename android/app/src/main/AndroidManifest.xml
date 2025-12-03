@@ -28,7 +28,7 @@
     </queries>
 
     <application
-        android:label="agri_vision"
+        android:label="ایگری ویژن"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

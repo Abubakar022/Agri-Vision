@@ -39,7 +39,7 @@ class CustomDrawer extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    "زرعی ویژن",
+                   "ایگری ویژن",
                     style: GoogleFonts.vazirmatn(
                       color: Colors.white,
                       fontSize: 28,

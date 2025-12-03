@@ -51,7 +51,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
       }
 
       // 🔹 Step 2: API call with userId
-      final url = Uri.parse('http://10.0.2.2:3000/getOrderData?userId=$uid');
+      final url = Uri.parse('https://agri-node-backend-1075549714370.us-central1.run.app/getOrderData?userId=$uid');
       final response = await http.get(url);
 
       // 🔹 Step 3: Handle response

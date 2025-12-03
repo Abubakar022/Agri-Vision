@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:agri_vision/src/presentation/screens/Drone_Module/DroneBookingConfirmationScreen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -26,6 +27,7 @@ class _DroneBookingScreenState extends State<DroneBookingScreen> {
   double _price = 0.0;
   bool _isSubmitting = false;
   final Color _green = const Color(0xFF02A96C);
+  Timer? _debounceTimer;
 
   // Urdu Districts and Tehsils of Punjab
   final Map<String, List<String>> punjabDistricts = {
@@ -70,23 +72,81 @@ class _DroneBookingScreenState extends State<DroneBookingScreen> {
   List<String> tehsils = [];
   String? selectedDistrict;
 
+  @override
+  void dispose() {
+    _debounceTimer?.cancel();
+    super.dispose();
+  }
+
   void _calculatePrice(String value) {
-    setState(() {
-      final acres = double.tryParse(value) ?? 0;
-      _price = (acres < 0) ? 0.0 : acres * 850;
+    // Cancel any previous timer
+    _debounceTimer?.cancel();
+    
+    // Start a new timer
+    _debounceTimer = Timer(const Duration(milliseconds: 100), () {
+      if (mounted) {
+        setState(() {
+          final acres = double.tryParse(value) ?? 0;
+          _price = acres * 850;
+        });
+      }
     });
+  }
+
+  void _clearForm() {
+    // Cancel any pending timer first
+    _debounceTimer?.cancel();
+    
+    // Clear all fields and reset price
+    _formKey.currentState?.reset();
+    _nameController.clear();
+    _phoneController.clear();
+    _districtController.clear();
+    _tehsilController.clear();
+    _cityController.clear();
+    _addressController.clear();
+    _acreController.clear();
+    
+    // Reset price immediately
+    if (mounted) {
+      setState(() {
+        _price = 0.0;
+        tehsils.clear();
+        selectedDistrict = null;
+      });
+    }
   }
 
   Future<void> submitOrder() async {
     if (!_formKey.currentState!.validate()) {
-      Get.snackbar("غلطی", "براہِ کرم تمام فیلڈز درست کریں۔",
-          backgroundColor: Colors.red, colorText: Colors.white);
+      Get.snackbar(
+        "غلطی",
+        "براہِ کرم تمام فیلڈز درست کریں۔",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        messageText: const Align(
+          alignment: Alignment.centerRight,
+          child: Text(
+            "براہِ کرم تمام فیلڈز درست کریں۔",
+            textAlign: TextAlign.right,
+            textDirection: TextDirection.rtl,
+          ),
+        ),
+        titleText: const Align(
+          alignment: Alignment.centerRight,
+          child: Text(
+            "غلطی",
+            textAlign: TextAlign.right,
+            textDirection: TextDirection.rtl,
+          ),
+        ),
+      );
       return;
     }
 
     setState(() => _isSubmitting = true);
     try {
-      final url = Uri.parse('http://10.0.2.2:3000/order');
+      final url = Uri.parse('https://agri-node-backend-1075549714370.us-central1.run.app/order');
       User? user = FirebaseAuth.instance.currentUser;
       final String uid = user?.uid ?? '';
 
@@ -106,31 +166,140 @@ class _DroneBookingScreenState extends State<DroneBookingScreen> {
         url,
         headers: {"Content-Type": "application/json"},
         body: jsonEncode(body),
-      );
+      ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        Get.snackbar("کامیابی", "آپ کا آرڈر کامیابی سے جمع ہو گیا!",
-            backgroundColor: _green, colorText: Colors.white);
-        _formKey.currentState!.reset();
-        _nameController.clear();
-        _phoneController.clear();
-        _districtController.clear();
-        _tehsilController.clear();
-        _cityController.clear();
-        _addressController.clear();
-        _acreController.clear();
-        setState(() {
-          _price = 0.0;
-          tehsils.clear();
-        });
+        Get.snackbar(
+          "کامیابی",
+          "آپ کا آرڈر کامیابی سے جمع ہو گیا!",
+          backgroundColor: _green,
+          colorText: Colors.white,
+          messageText: const Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              "آپ کا آرڈر کامیابی سے جمع ہو گیا!",
+              textAlign: TextAlign.right,
+              textDirection: TextDirection.rtl,
+            ),
+          ),
+          titleText: const Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              "کامیابی",
+              textAlign: TextAlign.right,
+              textDirection: TextDirection.rtl,
+            ),
+          ),
+        );
+        
+        // Clear the form immediately after successful submission
+        _clearForm();
+        
+        // Navigate to confirmation screen
         Get.to(() => const OrderFinalPage());
       } else {
-        Get.snackbar("غلطی", "سرور کی جانب سے مسئلہ پیش آیا۔",
-            backgroundColor: Colors.red, colorText: Colors.white);
+        String errorMessage = "سرور کی جانب سے مسئلہ پیش آیا۔";
+        
+        if (response.statusCode >= 500) {
+          errorMessage = "سرور پر مسئلہ پیش آیا ہے۔ براہ کرم بعد میں کوشش کریں۔";
+        } else if (response.statusCode == 404) {
+          errorMessage = "خدمت دستیاب نہیں ہے۔";
+        } else if (response.statusCode == 401 || response.statusCode == 403) {
+          errorMessage = "آپ اس عمل کو انجام دینے کے مجاز نہیں ہیں۔";
+        }
+        
+        Get.snackbar(
+          "غلطی",
+          errorMessage,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+          messageText: Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              errorMessage,
+              textAlign: TextAlign.right,
+              textDirection: TextDirection.rtl,
+            ),
+          ),
+          titleText: const Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              "غلطی",
+              textAlign: TextAlign.right,
+              textDirection: TextDirection.rtl,
+            ),
+          ),
+        );
       }
+    } on http.ClientException catch (e) {
+      Get.snackbar(
+        "نیٹ ورک خرابی",
+        "انٹرنیٹ کنکشن چیک کریں۔",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        messageText: const Align(
+          alignment: Alignment.centerRight,
+          child: Text(
+            "انٹرنیٹ کنکشن چیک کریں۔",
+            textAlign: TextAlign.right,
+            textDirection: TextDirection.rtl,
+          ),
+        ),
+        titleText: const Align(
+          alignment: Alignment.centerRight,
+          child: Text(
+            "نیٹ ورک خرابی",
+            textAlign: TextAlign.right,
+            textDirection: TextDirection.rtl,
+          ),
+        ),
+      );
+    } on TimeoutException catch (_) {
+      Get.snackbar(
+        "ٹائم آؤٹ",
+        "سرور جواب دینے میں دیر کر رہا ہے۔ براہ کرم دوبارہ کوشش کریں۔",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        messageText: const Align(
+          alignment: Alignment.centerRight,
+          child: Text(
+            "سرور جواب دینے میں دیر کر رہا ہے۔ براہ کرم دوبارہ کوشش کریں۔",
+            textAlign: TextAlign.right,
+            textDirection: TextDirection.rtl,
+          ),
+        ),
+        titleText: const Align(
+          alignment: Alignment.centerRight,
+          child: Text(
+            "ٹائم آؤٹ",
+            textAlign: TextAlign.right,
+            textDirection: TextDirection.rtl,
+          ),
+        ),
+      );
     } catch (e) {
-      Get.snackbar("خرابی", "سرور سے رابطہ نہیں ہو سکا: $e",
-          backgroundColor: Colors.red, colorText: Colors.white);
+      Get.snackbar(
+        "خرابی",
+        "ایک غیر متوقع مسئلہ پیش آیا ہے۔ براہ کرم دوبارہ کوشش کریں۔",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        messageText: const Align(
+          alignment: Alignment.centerRight,
+          child: Text(
+            "ایک غیر متوقع مسئلہ پیش آیا ہے۔ براہ کرم دوبارہ کوشش کریں۔",
+            textAlign: TextAlign.right,
+            textDirection: TextDirection.rtl,
+          ),
+        ),
+        titleText: const Align(
+          alignment: Alignment.centerRight,
+          child: Text(
+            "خرابی",
+            textAlign: TextAlign.right,
+            textDirection: TextDirection.rtl,
+          ),
+        ),
+      );
     } finally {
       setState(() => _isSubmitting = false);
     }
@@ -182,11 +351,13 @@ class _DroneBookingScreenState extends State<DroneBookingScreen> {
                             items: districts,
                             validator: (v) => v == null || v.isEmpty ? 'ضلع منتخب کریں' : null,
                             onChanged: (value) {
-                              setState(() {
-                                selectedDistrict = value;
-                                _districtController.text = value ?? '';
-                                tehsils = punjabDistricts[value] ?? [];
-                                _tehsilController.clear();
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                setState(() {
+                                  selectedDistrict = value;
+                                  _districtController.text = value ?? '';
+                                  tehsils = punjabDistricts[value] ?? [];
+                                  _tehsilController.clear();
+                                });
                               });
                             },
                           ),
@@ -202,7 +373,12 @@ class _DroneBookingScreenState extends State<DroneBookingScreen> {
                             hint: "رقبہ (ایکرز میں)",
                             controller: _acreController,
                             keyboardType: TextInputType.number,
-                            validator: (v) => (v == null || v.isEmpty) ? "رقبہ درج کریں" : null,
+                            validator: (v) {
+                              if (v == null || v.isEmpty) return "رقبہ درج کریں";
+                              final acres = double.tryParse(v);
+                              if (acres == null || acres <= 0) return "درست رقبہ درج کریں";
+                              return null;
+                            },
                             onChanged: _calculatePrice,
                           ),
                           Align(
@@ -260,12 +436,32 @@ class _DroneBookingScreenState extends State<DroneBookingScreen> {
           TextDirection currentDirection = TextDirection.rtl;
 
           void _updateDirection(String text) {
-            if (text.isEmpty) return;
-            final isUrdu = RegExp(r'[\u0600-\u06FF]').hasMatch(text);
-            setInnerState(() {
-              currentDirection = isUrdu ? TextDirection.rtl : TextDirection.ltr;
-            });
+            if (text.isEmpty) {
+              setInnerState(() {
+                currentDirection = TextDirection.rtl;
+              });
+              return;
+            }
+            
+            // For number fields, always show cursor on right side
+            if (keyboardType == TextInputType.number) {
+              setInnerState(() {
+                currentDirection = TextDirection.ltr;
+              });
+            } else {
+              // For other fields, detect language
+              final isUrdu = RegExp(r'[\u0600-\u06FF]').hasMatch(text);
+              setInnerState(() {
+                currentDirection = isUrdu ? TextDirection.rtl : TextDirection.ltr;
+              });
+            }
+            
             if (onChanged != null) onChanged(text);
+          }
+
+          // Initialize direction based on current text
+          if (controller.text.isNotEmpty) {
+            _updateDirection(controller.text);
           }
 
           return TextFormField(

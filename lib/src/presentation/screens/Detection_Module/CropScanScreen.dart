@@ -27,11 +27,11 @@ class _CropScanScreenState extends State<CropScanScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final HistoryController _historyController = Get.find<HistoryController>();
 
-  // API Configuration
-  static const String BASE_URL = "http://192.168.100.25:5000";
+  // API Configuration - Google Cloud Run
+  static const String BASE_URL = "https://wheat-backend-1075549714370.us-central1.run.app";
   static const String PREDICT_ENDPOINT = "$BASE_URL/predict";
 
-  void _showCustomSnackbar(String title, String message, Color color, IconData icon) {
+  void _showCustomSnackbarTop(String title, String message, Color color, IconData icon) {
     Get.showSnackbar(
       GetSnackBar(
         titleText: Directionality(
@@ -65,7 +65,7 @@ class _CropScanScreenState extends State<CropScanScreen> {
         ),
         backgroundColor: color,
         duration: const Duration(seconds: 4),
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP, // TOP side mein show hoga
         borderRadius: 12,
         margin: const EdgeInsets.all(16),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -80,71 +80,82 @@ class _CropScanScreenState extends State<CropScanScreen> {
     );
   }
 
-  // Real API Call
- // Real API Call - Optimized Version
-Future<Map<String, dynamic>?> _analyzeImageWithAPI() async {
-  if (_selectedImage == null) {
-    _showCustomSnackbar(
-      'تصویر منتخب کریں',
-      'براہ کرم پہلے ایک تصویر منتخب کریں',
-      Colors.orange,
-      Icons.warning,
-    );
-    return null;
-  }
-
-  setState(() {
-    _isLoading = true;
-  });
-
-  try {
-    // Create multipart request
-    var request = http.MultipartRequest('POST', Uri.parse(PREDICT_ENDPOINT));
-    
-    // Add image file
-    request.files.add(
-      await http.MultipartFile.fromPath(
-        'file',
-        _selectedImage!.path,
-      ),
-    );
-
-    // Send request with timeout
-    var streamedResponse = await request.send().timeout(
-      const Duration(seconds: 30),
-      onTimeout: () => throw TimeoutException('Request timeout'),
-    );
-
-    // Get response
-    var response = await http.Response.fromStream(streamedResponse);
-
-    // Check if request was successful
-    if (response.statusCode == 200) {
-      Map<String, dynamic> apiResponse = json.decode(response.body);
-      return apiResponse;
-    } else if (response.statusCode == 400) {
-      throw "غلط درخواست: براہ کرم تصویر کی شکل چیک کریں";
-    } else if (response.statusCode == 500) {
-      throw "سرور میں مسئلہ: براہ کرم بعد میں کوشش کریں";
-    } else {
-      throw "سرور سے رابطہ نہیں ہو سکا (Error ${response.statusCode})";
+  // Real API Call - Google Cloud Run Version
+  Future<Map<String, dynamic>?> _analyzeImageWithAPI() async {
+    if (_selectedImage == null) {
+      _showCustomSnackbarTop(
+        'تصویر منتخب کریں',
+        'براہ کرم پہلے ایک تصویر منتخب کریں',
+        Colors.orange,
+        Icons.warning,
+      );
+      return null;
     }
-  } on TimeoutException catch (_) {
-    throw "سرور کا جواب موصول نہیں ہوا۔ براہ کرم دوبارہ کوشش کریں۔";
-  } on SocketException catch (_) {
-    throw "انٹرنیٹ کنکشن دستیاب نہیں ہے۔ براہ کرم اپنا انٹرنیٹ چیک کریں۔";
-  } on http.ClientException catch (e) {
-    throw "نیٹ ورک کنکشن میں مسئلہ: ${e.message}";
-  } on FormatException catch (_) {
-    throw "سرور سے غلط جواب ملا۔ براہ کرم دوبارہ کوشش کریں۔";
-  } catch (e) {
-    throw "تصویر کا تجزیہ کرنے میں مسئلہ ہوا: ${e.toString().split(':').first}";
-  } finally {
+
     setState(() {
-      _isLoading = false;
+      _isLoading = true;
     });
+
+    try {
+      print('🚀 Connecting to Google Cloud Run: $PREDICT_ENDPOINT');
+      
+      // Create multipart request for Google Cloud Run
+      var request = http.MultipartRequest('POST', Uri.parse(PREDICT_ENDPOINT));
+      
+      // Add image file
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'file',
+          _selectedImage!.path,
+          filename: 'wheat_image.jpg',
+        ),
+      );
+
+      // Add headers if needed
+      request.headers['Accept'] = 'application/json';
+      request.headers['User-Agent'] = 'AgriVision-Mobile-App';
+
+      // Send request with timeout
+      var streamedResponse = await request.send().timeout(
+        const Duration(seconds: 45), // Cloud Run ke liye thora zyada timeout
+      );
+
+      // Get response
+      var response = await http.Response.fromStream(streamedResponse);
+      
+      print('📡 Cloud Run Response Status: ${response.statusCode}');
+
+      // Check if request was successful
+      if (response.statusCode == 200) {
+        Map<String, dynamic> apiResponse = json.decode(response.body);
+        print('✅ Cloud Run API Success!');
+        return apiResponse;
+      } else if (response.statusCode == 400) {
+        throw "غلط درخواست: براہ کرم تصویر کی شکل چیک کریں";
+      } else if (response.statusCode == 500) {
+        throw "سرور میں مسئلہ: براہ کرم بعد میں کوشش کریں";
+      } else if (response.statusCode == 404) {
+        throw "API endpoint موجود نہیں ہے";
+      } else {
+        throw "سرور سے رابطہ نہیں ہو سکا (Error ${response.statusCode})";
+      }
+    } on TimeoutException catch (_) {
+      throw "سرور کا جواب موصول نہیں ہوا۔ براہ کرم دوبارہ کوشش کریں۔";
+    } on SocketException catch (_) {
+      throw "انٹرنیٹ کنکشن دستیاب نہیں ہے۔ براہ کرم اپنا انٹرنیٹ چیک کریں۔";
+    } on http.ClientException catch (e) {
+      throw "نیٹ ورک کنکشن میں مسئلہ: ${e.message}";
+    } on FormatException catch (_) {
+      throw "سرور سے غلط جواب ملا۔ براہ کرم دوبارہ کوشش کریں۔";
+    } catch (e) {
+      print('❌ API Error: $e');
+      throw "تصویر کا تجزیہ کرنے میں مسئلہ ہوا: ${e.toString().split(':').first}";
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
-}
 
   // Handle API Response
   void _handleAPIResponse(Map<String, dynamic> response) {
@@ -164,7 +175,7 @@ Future<Map<String, dynamic>?> _analyzeImageWithAPI() async {
         break;
       
       default:
-        _showCustomSnackbar(
+        _showCustomSnackbarTop(
           'غیر متوقع جواب',
           'سرور سے غیر متوقع جواب موصول ہوا۔ براہ کرم دوبارہ کوشش کریں۔',
           Colors.orange,
@@ -201,7 +212,7 @@ Future<Map<String, dynamic>?> _analyzeImageWithAPI() async {
   }
 
   void _handleUnsureResponse(Map<String, dynamic> response) {
-    _showCustomSnackbar(
+    _showCustomSnackbarTop(
       'تصویر واضح نہیں',
       response['message'] ?? 'براہ کرم واضح اور فوکسڈ تصویر اپلوڈ کریں۔',
       Colors.orange,
@@ -210,7 +221,7 @@ Future<Map<String, dynamic>?> _analyzeImageWithAPI() async {
   }
 
   void _handleRejectedResponse(Map<String, dynamic> response) {
-    _showCustomSnackbar(
+    _showCustomSnackbarTop(
       'انتباہ',
       response['message'] ?? 'براہ کرم گندم کے متاثرہ حصے کی واضح تصویر اپلوڈ کریں۔',
       Colors.red,
@@ -234,7 +245,7 @@ Future<Map<String, dynamic>?> _analyzeImageWithAPI() async {
         final maxSize = 5 * 1024 * 1024; // 5MB
 
         if (fileSize > maxSize) {
-          _showCustomSnackbar(
+          _showCustomSnackbarTop(
             'فائل سائز بڑا ہے',
             'براہ کرم 5MB سے چھوٹی تصویر منتخب کریں',
             Colors.orange,
@@ -247,7 +258,7 @@ Future<Map<String, dynamic>?> _analyzeImageWithAPI() async {
           _selectedImage = file;
         });
         
-        _showCustomSnackbar(
+        _showCustomSnackbarTop(
           'کامیابی',
           'تصویر کامیابی سے منتخب ہو گئی',
           Colors.green,
@@ -265,7 +276,7 @@ Future<Map<String, dynamic>?> _analyzeImageWithAPI() async {
         errorMessage = 'اسٹوریج تک رسائی کی اجازت درکار ہے';
       }
       
-      _showCustomSnackbar(
+      _showCustomSnackbarTop(
         'خرابی',
         errorMessage,
         Colors.red,
@@ -279,7 +290,7 @@ Future<Map<String, dynamic>?> _analyzeImageWithAPI() async {
       _selectedImage = null;
     });
     
-    _showCustomSnackbar(
+    _showCustomSnackbarTop(
       'تصویر ہٹائی گئی',
       'تصویر کامیابی سے ہٹا دی گئی ہے',
       Colors.blue,
@@ -437,7 +448,7 @@ Future<Map<String, dynamic>?> _analyzeImageWithAPI() async {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      // 🌾 Welcome Section
+                      // 🌾 Welcome Section with Cloud Status
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(20),
@@ -475,7 +486,7 @@ Future<Map<String, dynamic>?> _analyzeImageWithAPI() async {
                             ),
                             const SizedBox(height: 5),
                             Text(
-                              "گندم کے متاثرہ حصے کی تصویر اپ لوڈ کریں اور بہترین نتائج کے لیے ہدایات حاصل کریں",
+                            "گندم کے متاثرہ حصے کی تصویر اپ لوڈ کریں اور بہترین نتائج کے لیے ہدایات حاصل کریں۔",
                               textAlign: TextAlign.center,
                               style: GoogleFonts.vazirmatn(
                                 fontSize: 14,
@@ -489,13 +500,20 @@ Future<Map<String, dynamic>?> _analyzeImageWithAPI() async {
                                 color: Colors.white.withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(20),
                               ),
-                              child: Text(
-                                "صرف متاثرہ حصے کی تصویر لیں",
-                                style: GoogleFonts.vazirmatn(
-                                  fontSize: 12,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w500,
-                                ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.cloud_done, size: 16, color: Colors.white),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    "صرف متاثرہ حصے کی تصویر لیں",
+                                    style: GoogleFonts.vazirmatn(
+                                      fontSize: 12,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
@@ -753,10 +771,10 @@ Future<Map<String, dynamic>?> _analyzeImageWithAPI() async {
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    const Icon(Icons.analytics, color: Colors.white),
+                                    const Icon(Icons.cloud_upload, color: Colors.white),
                                     const SizedBox(width: 12),
                                     Text(
-                                     "تشخیص کریں",
+                                    "تشخیص کریں",
                                       style: GoogleFonts.vazirmatn(
                                         fontSize: 18,
                                         color: Colors.white,
@@ -819,7 +837,7 @@ class _ActionButton extends StatelessWidget {
             ),
           ],
         ),
-      ),
+      )
     );
   }
 }

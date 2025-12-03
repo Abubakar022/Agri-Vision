@@ -39,7 +39,8 @@ class OnboardingScreen extends StatelessWidget {
             right: 8,
             child: TextButton(
                 onPressed: () {
-                  controller.skipPage();
+                 
+                 controller.skipPage();
                 },
                 child: Text(
                   'چھوڑیں',

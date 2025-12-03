@@ -15,71 +15,74 @@ class SplashScreen extends StatelessWidget {
     final width = size.width;
 
     return Scaffold(
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          Image.asset(
-            'assets/images/wheatBg.jpeg',
-            fit: BoxFit.cover,
-          ),
-          // Centered drone image, responsive top position
-          Positioned(
-            top: height * 0.25, // 18% from top
-            left: (width - width * 1.1) / 2,
-            child: Image.asset(
-              'assets/images/drone.png',
-              width: width * 1.2,
+      body: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.asset(
+              'assets/images/wheatBg.jpeg',
+              fit: BoxFit.cover,
             ),
-          ),
-          // Centered text, responsive top position and full width
-          Positioned(
-            top: height * 0.45, // 48% from top
-            left: 0,
-            child: SizedBox(
-              width: width,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        "Agri",
-                        style: GoogleFonts.poppins(
-                          color: Colors.black,
-                          fontWeight: FontWeight.bold,
-                          fontSize: width * 0.1,
-                        ),
-                      ),
-                      Aspace.spaceHorizontal(8),
-                       AnimatedGradientText(
-      text: 'Vision',
-      style: GoogleFonts.roboto(
-        fontWeight: FontWeight.bold,
-        fontSize: width * 0.1,
-      ),
-      colors: [
-        Appcolor.visionG,
-        Appcolor.SplashScreenColor,
-      ],
-      glowRadius: 10,
-    ),
-                    ],
-                  ),
-                  Text(
-                    "Smart Solution for Modern Farming",
-                    style: GoogleFonts.poppins(
-                      color: Colors.black,
-                      fontWeight: FontWeight.w500,
-                      fontSize: width * 0.04,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
+            // Centered drone image, responsive top position
+            Positioned(
+              top: height * 0.25, // 25% from top
+              left: (width - width * 1.1) / 2,
+              child: Image.asset(
+                'assets/images/drone.png',
+                width: width * 1.2,
               ),
             ),
-          ),
-        ],
+            // Centered text, responsive top position and full width
+            Positioned(
+              top: height * 0.45, // 45% from top
+              left: 0,
+              child: SizedBox(
+                width: width,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          "ایگری",
+                          style: GoogleFonts.poppins(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                            fontSize: width * 0.1,
+                          ),
+                        ),
+                        Aspace.spaceHorizontal(8),
+                        AnimatedGradientText(
+                          text: 'ویژن',
+                          style: GoogleFonts.roboto(
+                            fontWeight: FontWeight.bold,
+                            fontSize: width * 0.1,
+                          ),
+                          colors: [
+                            Appcolor.visionG,
+                            Appcolor.SplashScreenColor,
+                          ],
+                          glowRadius: 10,
+                        ),
+                      ],
+                    ),
+                    Text(
+                      "جدید کاشتکاری کا ذہین حل",
+                      style: GoogleFonts.poppins(
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                        fontSize: width * 0.04,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

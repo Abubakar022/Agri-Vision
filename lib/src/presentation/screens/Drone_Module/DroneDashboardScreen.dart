@@ -62,11 +62,11 @@ class DroneServiceScreen extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        Icons.precision_manufacturing,
-                        color: Colors.white,
-                        size: 40,
-                      ),
+                      // Icon(
+                      //   Icons.precision_manufacturing,
+                      //   color: Colors.white,
+                      //   size: 40,
+                      // ),
                       SizedBox(height: 8),
                       Text(
                         'جدید ڈرون ٹیکنالوجی',

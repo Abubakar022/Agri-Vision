@@ -4,7 +4,7 @@ import 'package:agri_vision/src/presentation/screens/ChatBot_Module/chatbot.dart
 import 'package:agri_vision/src/presentation/screens/Drone_Module/DroneDashboardScreen.dart'; 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:agri_vision/src/presentation/screens/Detection_Module/CropScanScreen.dart';
 // اگر DroneServiceScreen موجود نہیں ہے تو اس لائن کو ان کمنٹ کریں
 // import 'package:agri_vision/src/presentation/screens/Drone_Module/DroneBookingScreen.dart';
@@ -69,9 +69,10 @@ class _HomeNavigationState extends State<HomeNavigation> {
                 text: "مشاورت", // <-- نام تبدیل کیا گیا (Consultation)
               ),
               GButton(
-                icon: Icons.flight_takeoff_rounded, // <-- یہ آئیکن بھی ٹھیک ہے
-                text: "ڈرون سروس", // <-- یہ نام پہلے ہی بہترین تھا
-              ),
+  icon: Symbols.drone_rounded, // <-- New drone icon from the package
+  text: "ڈرون سروس",
+  // ... your other properties
+),
             ],
             // ==========================================================
           ),
