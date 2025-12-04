@@ -1,8 +1,10 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
 import 'package:agri_vision/src/presentation/AppConstant/Colors.dart';
 import 'package:agri_vision/src/presentation/screens/flow/otp_verify_page.dart';
-import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:get/get.dart';
 
 class UserInformation extends StatefulWidget {
   const UserInformation({super.key});
@@ -13,18 +15,20 @@ class UserInformation extends StatefulWidget {
 
 class _UserInformationState extends State<UserInformation> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
   bool _isLoading = false;
+  String? _backendError;
 
-  Future<void> _verifyPhoneNumber() async {
+  Future<void> _requestEmailOTP() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
       _isLoading = true;
+      _backendError = null;
     });
 
     try {
-      String phone = '+92${_phoneController.text.trim()}';
+      String email = _emailController.text.trim();
       
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -45,62 +49,45 @@ class _UserInformationState extends State<UserInformation> {
         ),
       );
 
-      await FirebaseAuth.instance.verifyPhoneNumber(
-        phoneNumber: phone,
-        verificationCompleted: (PhoneAuthCredential credential) {},
-        verificationFailed: (FirebaseAuthException e) {
-          String errorMessage = 'OTP بھیجنے میں ناکامی';
-          switch (e.code) {
-            case 'invalid-phone-number':
-              errorMessage = 'غلط فون نمبر کی شکل۔ براہ کرم صحیح نمبر درج کریں';
-              break;
-            case 'too-many-requests':
-              errorMessage = 'بہت زیادہ کوششیں، براہ کرم تھوڑی دیر بعد کوشش کریں';
-              break;
-            case 'quota-exceeded':
-              errorMessage = 'حد سے زیادہ درخواستیں، براہ کرم بعد میں کوشش کریں';
-              break;
-            case 'network-request-failed':
-              errorMessage = 'نیٹ ورک کنکشن نہیں ہے، براہ کرم انٹرنیٹ چیک کریں';
-              break;
-            default:
-              errorMessage = 'نظام میں خرابی: ${e.message}';
-          }
-          
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(errorMessage),
-              backgroundColor: Colors.red,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+      // Replace with your backend URL
+      final url = Uri.parse('http://10.0.2.2:5000/request-otp'); // For emulator
+      // For real device: http://YOUR_SERVER_IP:5000/api/auth/request-otp
+      
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
         },
-        codeSent: (String verificationId, int? resendToken) {
-          ScaffoldMessenger.of(context).hideCurrentSnackBar();
-          Get.off(() => OtpVerifyPage(
-  phone: _phoneController.text.trim(),
-  verificationId: verificationId,
-));
+        body: jsonEncode({
+          'email': email,
+        }),
+      );
 
-        },
-        codeAutoRetrievalTimeout: (String verificationId) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('OTP کی مدت ختم ہو گئی، براہ کرم دوبارہ کوشش کریں'),
-              backgroundColor: Colors.orange,
-            ),
-          );
-        },
-        timeout: const Duration(seconds: 60),
-      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        
+        if (data['status'] == 'success' || data['success'] == true) {
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          
+          Get.off(() => OtpVerifyPage(
+            email: email,
+          ));
+        } else {
+          _showErrorSnackBar(data['message'] ?? 'OTP بھیجنے میں ناکامی');
+        }
+      } else {
+        final errorData = jsonDecode(response.body);
+        _showErrorSnackBar(errorData['message'] ?? 'سرور سے جواب نہیں ملا');
+      }
+
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('نظام میں خرابی: $e'),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      String errorMessage = 'نیٹ ورک کنکشن میں مسئلہ';
+      if (e.toString().contains('Connection refused')) {
+        errorMessage = 'سرور سے کنکشن نہیں ہو پا رہا۔ براہ کرم سرور چیک کریں';
+      } else if (e.toString().contains('Failed host lookup')) {
+        errorMessage = 'انٹرنیٹ کنکشن نہیں ہے';
+      }
+      _showErrorSnackBar('$errorMessage: $e');
     } finally {
       if (mounted) {
         setState(() {
@@ -108,6 +95,24 @@ class _UserInformationState extends State<UserInformation> {
         });
       }
     }
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 4),
+        action: SnackBarAction(
+          label: 'ٹھیک ہے',
+          textColor: Colors.white,
+          onPressed: () {
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          },
+        ),
+      ),
+    );
   }
 
   @override
@@ -118,14 +123,11 @@ class _UserInformationState extends State<UserInformation> {
         body: Stack(
           fit: StackFit.expand,
           children: [
-       Image.asset(
-      'assets/images/userInformation.jpeg',
-      fit: BoxFit.cover,
-    ),
-    // Dark overlay for better text visibility
-    Container(
-      color: Colors.black.withAlpha(150), // Adjust alpha as needed
-    ),
+            Image.asset(
+              'assets/images/userInformation.jpeg',
+              fit: BoxFit.cover,
+            ),
+            Container(color: Colors.black.withAlpha(150)),
             Center(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -134,14 +136,13 @@ class _UserInformationState extends State<UserInformation> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Right-aligned headings
                       Align(
                         alignment: Alignment.centerRight,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              "فون نمبر کی تصدیق",
+                              "ای میل تصدیق",
                               style: TextStyle(
                                 fontSize: 26,
                                 fontWeight: FontWeight.bold,
@@ -150,7 +151,7 @@ class _UserInformationState extends State<UserInformation> {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              "اپنا فون نمبر درج کریں، ہم آپ کو تصدیقی کوڈ بھیجیں گے",
+                              "اپنا ای میل درج کریں، ہم آپ کو تصدیقی کوڈ بھیجیں گے",
                               textAlign: TextAlign.right,
                               style: TextStyle(
                                 fontSize: 16,
@@ -162,74 +163,92 @@ class _UserInformationState extends State<UserInformation> {
                       ),
                       const SizedBox(height: 30),
 
-                      // Reordered input field - Number input on right, country code on left
-           Container(
-  decoration: BoxDecoration(
-    color: Colors.white.withAlpha(50),
-    borderRadius: BorderRadius.circular(14),
-    border: Border.all(color: Colors.white70),
-  ),
-  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-  child: Row(
-    children: [
-   
-
-      // Input Field
-      Expanded(
-        child: TextFormField(
-          controller: _phoneController,
-          keyboardType: TextInputType.phone,
-          textDirection: TextDirection.ltr,
-          textAlign: TextAlign.left,
-          style: const TextStyle(color: Colors.white, fontSize: 16),
-          decoration: InputDecoration(
-            hintText: '3xx-xxxxxxx',
-            hintStyle: const TextStyle(color: Colors.white38),
-            labelText: 'اپنا فون نمبر درج کریں',
-            labelStyle: const TextStyle(color: Colors.white70),
-            border: InputBorder.none,
-            suffixIcon: _phoneController.text.isNotEmpty
-                ? IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white70, size: 20),
-                    onPressed: () {
-                      setState(() => _phoneController.clear());
-                    },
-                  )
-                : null,
-            contentPadding: const EdgeInsets.symmetric(vertical: 14),
-          ),
-          onChanged: (_) => setState(() {}),
-          validator: (value) {
-            if (value == null || value.trim().isEmpty) {
-              return 'براہ کرم اپنا فون نمبر درج کریں';
-            }
-
-            final trimmed = value.trim();
-
-            // ✅ Pakistani number check: must start with 3 and have 10 digits total
-            if (!RegExp(r'^3\d{9}$').hasMatch(trimmed)) {
-              if (!trimmed.startsWith('3')) {
-                return 'فون نمبر 3 سے شروع ہونا چاہیے';
-              } else if (trimmed.length != 10) {
-                return 'فون نمبر 10 ہندسوں کا ہونا چاہیے (مثلاً: 3366215818)';
-              } else {
-                return 'صرف ہندسے درج کریں (مثلاً: 3366215818)';
-              }
-            }
-            return null;
-          },
-        ),
-      ),
-    ],
-  ),
-),
-        
-                      // Help text below input field
+                      // Email Input Field
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withAlpha(50),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: Colors.white70),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                        child: TextFormField(
+                          controller: _emailController,
+                          keyboardType: TextInputType.emailAddress,
+                          textDirection: TextDirection.ltr,
+                          textAlign: TextAlign.left,
+                          style: const TextStyle(color: Colors.white, fontSize: 16),
+                          decoration: InputDecoration(
+                            hintText: 'example@gmail.com',
+                            hintStyle: const TextStyle(color: Colors.white38),
+                            labelText: 'اپنا ای میل درج کریں',
+                            labelStyle: const TextStyle(color: Colors.white70),
+                            border: InputBorder.none,
+                            suffixIcon: _emailController.text.isNotEmpty
+                                ? IconButton(
+                                    icon: const Icon(Icons.close, color: Colors.white70, size: 20),
+                                    onPressed: () {
+                                      setState(() => _emailController.clear());
+                                    },
+                                  )
+                                : null,
+                            contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                            prefixIcon: const Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 12),
+                              child: Icon(Icons.email, color: Colors.white70, size: 20),
+                            ),
+                          ),
+                          onChanged: (_) {
+                            setState(() {
+                              _backendError = null;
+                            });
+                          },
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'براہ کرم اپنا ای میل درج کریں';
+                            }
+                            
+                            final emailRegex = RegExp(
+                              r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+                            );
+                            
+                            if (!emailRegex.hasMatch(value.trim())) {
+                              return 'براہ کرم درست ای میل درج کریں';
+                            }
+                            
+                            return null;
+                          },
+                        ),
+                      ),
+                      
+                      if (_backendError != null) ...[
+                        const SizedBox(height: 10),
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withAlpha(30),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.red.withAlpha(100)),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.error, color: Colors.red, size: 16),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  _backendError!,
+                                  style: const TextStyle(color: Colors.red, fontSize: 12),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                      
                       const SizedBox(height: 8),
                       Align(
                         alignment: Alignment.centerRight,
                         child: Text(
-                          "فون نمبر 3 سے شروع ہو کر 10 ہندسوں کا ہونا چاہیے",
+                          "OTP آپ کے ای میل پر بھیجا جائے گا",
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.white60,
@@ -251,7 +270,7 @@ class _UserInformationState extends State<UserInformation> {
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             elevation: 2,
                           ),
-                          onPressed: _isLoading ? null : _verifyPhoneNumber,
+                          onPressed: _isLoading ? null : _requestEmailOTP,
                           child: _isLoading
                               ? const SizedBox(
                                   height: 20,
@@ -265,7 +284,7 @@ class _UserInformationState extends State<UserInformation> {
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     const Icon(
-                                      Icons.send,
+                                      Icons.email,
                                       color: Colors.white,
                                       size: 20,
                                     ),
@@ -283,7 +302,7 @@ class _UserInformationState extends State<UserInformation> {
                         ),
                       ),
 
-                      // Additional info
+                      // Network Configuration Help
                       const SizedBox(height: 20),
                       Container(
                         padding: const EdgeInsets.all(12),
@@ -291,20 +310,26 @@ class _UserInformationState extends State<UserInformation> {
                           color: Colors.white.withAlpha(20),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            Expanded(
-                              child: Text(
-                                "OTP آپ کے فون پر SMS کے ذریعے بھیجا جائے گا",
-                                textAlign: TextAlign.right,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.white70,
-                                ),
+                            Text(
+                              "نیٹ ورک کنفیگریشن:",
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.white70,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
-                           
+                            const SizedBox(height: 4),
+                            Text(
+                              "ایمیولیٹر: http://10.0.2.2:5000\nاصل ڈیوائس: http://YOUR_PC_IP:5000",
+                              textAlign: TextAlign.right,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.white60,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -321,7 +346,7 @@ class _UserInformationState extends State<UserInformation> {
 
   @override
   void dispose() {
-    _phoneController.dispose();
+    _emailController.dispose();
     super.dispose();
   }
 }

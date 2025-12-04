@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:agri_vision/src/presentation/screens/Drone_Module/DroneBookingConfirmationScreen.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DroneBookingScreen extends StatefulWidget {
   const DroneBookingScreen({super.key});
@@ -147,11 +147,41 @@ class _DroneBookingScreenState extends State<DroneBookingScreen> {
     setState(() => _isSubmitting = true);
     try {
       final url = Uri.parse('https://agri-node-backend-1075549714370.us-central1.run.app/order');
-      User? user = FirebaseAuth.instance.currentUser;
-      final String uid = user?.uid ?? '';
+      
+      // 🔴 ONLY CHANGE HERE: Get userId from SharedPreferences instead of Firebase
+      final prefs = await SharedPreferences.getInstance();
+      final String uid = prefs.getString('userId') ?? '';
+      
+      // Check if user is logged in
+      if (uid.isEmpty) {
+        Get.snackbar(
+          "غلطی",
+          "آپ لاگ ان نہیں ہیں۔ براہ کرم پہلے لاگ ان کریں۔",
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+          messageText: const Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              "آپ لاگ ان نہیں ہیں۔ براہ کرم پہلے لاگ ان کریں۔",
+              textAlign: TextAlign.right,
+              textDirection: TextDirection.rtl,
+            ),
+          ),
+          titleText: const Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              "غلطی",
+              textAlign: TextAlign.right,
+              textDirection: TextDirection.rtl,
+            ),
+          ),
+        );
+        setState(() => _isSubmitting = false);
+        return;
+      }
 
       final body = {
-        "userId": uid,
+        "userId": uid,  // 🔴 This will be your new backend's userId
         "Username": _nameController.text.trim(),
         "phone": _phoneController.text.trim(),
         "district": _districtController.text.trim(),
