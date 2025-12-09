@@ -1,14 +1,79 @@
-// lib/src/presentation/widgets/custom_drawer.dart
 import 'package:agri_vision/src/presentation/screens/Drawer_Pages/History_Screen/history_screen.dart';
 import 'package:agri_vision/src/presentation/screens/Drawer_Pages/support_screen.dart';
 import 'package:agri_vision/src/presentation/screens/Drawer_Pages/about_screen.dart';
+import 'package:agri_vision/src/presentation/AppConstant/user_session.dart';
+import 'package:agri_vision/src/presentation/screens/flow/user_information.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-
 class CustomDrawer extends StatelessWidget {
   const CustomDrawer({super.key});
+
+  Future<void> _logoutUser(BuildContext context) async {
+    Get.dialog(
+      Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          title: Text(
+            "لاگ آؤٹ",
+            style: GoogleFonts.vazirmatn(fontWeight: FontWeight.bold),
+          ),
+          content: Text(
+            "کیا آپ لاگ آؤٹ کرنا چاہتے ہیں؟\nآپ کو دوبارہ ای میل اور OTP درج کرنا پڑے گا۔",
+            style: GoogleFonts.vazirmatn(),
+            textAlign: TextAlign.right,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(result: false),
+              child: Text(
+                "نہیں",
+                style: GoogleFonts.vazirmatn(color: const Color(0xFF02A96C)),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              onPressed: () => Get.back(result: true),
+              child: Text(
+                "ہاں، لاگ آؤٹ کریں",
+                style: GoogleFonts.vazirmatn(color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ).then((confirm) async {
+      if (confirm == true) {
+        Get.back(); // Close drawer
+        
+        // ✅ FIXED: Use UserSession.logout()
+        await UserSession.logout();
+        
+        Get.showSnackbar(
+          GetSnackBar(
+            messageText: Directionality(
+              textDirection: TextDirection.rtl,
+              child: Text(
+                "کامیابی سے لاگ آؤٹ ہو گئے",
+                style: GoogleFonts.vazirmatn(
+                  color: Colors.white,
+                  fontSize: 16,
+                ),
+                textAlign: TextAlign.right,
+              ),
+            ),
+            backgroundColor: const Color(0xFF02A96C),
+            duration: const Duration(seconds: 2),
+            snackPosition: SnackPosition.TOP,
+          ),
+        );
+        
+        await Future.delayed(const Duration(milliseconds: 500));
+        Get.offAll(() => const UserInformation());
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +84,6 @@ class CustomDrawer extends StatelessWidget {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            // Header Section
             Container(
               height: 200,
               decoration: const BoxDecoration(
@@ -32,14 +96,10 @@ class CustomDrawer extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
-                    Icons.agriculture,
-                    size: 50,
-                    color: Colors.white,
-                  ),
+                  const Icon(Icons.agriculture, size: 50, color: Colors.white),
                   const SizedBox(height: 10),
                   Text(
-                   "ایگری ویژن",
+                    "ایگری ویژن",
                     style: GoogleFonts.vazirmatn(
                       color: Colors.white,
                       fontSize: 28,
@@ -57,13 +117,12 @@ class CustomDrawer extends StatelessWidget {
               ),
             ),
 
-            // Menu Items
             _DrawerItem(
               icon: Icons.history,
               title: "سکین ہسٹری",
               onTap: () {
-                Navigator.pop(context);
-                Get.to(() => HistoryScreen());
+                Get.back();
+                Get.to(() =>  HistoryScreen());
               },
             ),
 
@@ -71,8 +130,8 @@ class CustomDrawer extends StatelessWidget {
               icon: Icons.help_outline,
               title: "مدد اور سپورٹ",
               onTap: () {
-                Navigator.pop(context);
-                Get.to(() => SupportScreen());
+                Get.back();
+                Get.to(() => const SupportScreen());
               },
             ),
 
@@ -80,21 +139,30 @@ class CustomDrawer extends StatelessWidget {
               icon: Icons.info_outline,
               title: "ایپ کے بارے میں",
               onTap: () {
-                Navigator.pop(context);
-                Get.to(() => AboutScreen());
+                Get.back();
+                Get.to(() => const AboutScreen());
               },
             ),
 
             const SizedBox(height: 20),
-            const Divider(
-              color: Color(0xFF02A96C),
-              height: 1,
-              indent: 20,
-              endIndent: 20,
+            ListTile(
+              leading: const Icon(Icons.logout, color: Colors.red, size: 24),
+              title: Text(
+                "لاگ آؤٹ کریں",
+                style: GoogleFonts.vazirmatn(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.red,
+                ),
+              ),
+              onTap: () => _logoutUser(context),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 25, vertical: 8),
             ),
+
+            const SizedBox(height: 20),
+            const Divider(color: Color(0xFF02A96C), height: 1, indent: 20, endIndent: 20),
             const SizedBox(height: 20),
 
-            // App Version
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Text(
@@ -127,11 +195,7 @@ class _DrawerItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: Icon(
-        icon,
-        color: const Color(0xFF02A96C),
-        size: 24,
-      ),
+      leading: Icon(icon, color: const Color(0xFF02A96C), size: 24),
       title: Text(
         title,
         style: GoogleFonts.vazirmatn(

@@ -48,7 +48,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: UserInformation(),
+      home: SplashController(),
     //   home: DetectionResultScreen(
     //   imageFile: File('assets/images/scan.jpeg'),
     //   diseaseName: "پتوں کا زنگ",

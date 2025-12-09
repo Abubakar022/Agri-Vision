@@ -8,7 +8,7 @@ import 'package:agri_vision/src/presentation/screens/flow/user_Information.dart'
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
+import 'package:get/get.dart';
 
 class SplashController extends StatefulWidget {
   const SplashController({super.key});
@@ -25,56 +25,47 @@ class _SplashControllerState extends State<SplashController> {
   }
 
   Future<void> _navigateAfterSplash() async {
-    await Future.delayed(const Duration(seconds: 3)); // splash delay
+    await Future.delayed(const Duration(seconds: 3));
 
     final prefs = await SharedPreferences.getInstance();
     final hasSeenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
 
-    // 🔹 Check Firebase current user (already logged in?)
+    // 🔹 Check Firebase current user
     final currentUser = FirebaseAuth.instance.currentUser;
+    
     if (currentUser != null) {
-      // ✅ User already logged in
-      UserSession.uid = currentUser.uid;
-      await prefs.setString('userId', currentUser.uid);
-      await prefs.setBool('isLoggedIn', true);
-
+      // ✅ User already logged in via Firebase
+      await UserSession.saveLogin(currentUser.uid, currentUser.email ?? '');
+      
       if (!mounted) return;
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const HomeNavigation()),
-      );
+      Get.offAll(() => const HomeNavigation());
+      return;
+    }
+
+    // 🔹 Check saved session
+    final isLoggedIn = await UserSession.isLoggedIn();
+    
+    if (isLoggedIn) {
+      // ✅ User logged in via saved session
+      if (!mounted) return;
+      Get.offAll(() => const HomeNavigation());
       return;
     }
 
     // 🔹 User not logged in
     await prefs.setBool('isLoggedIn', false);
 
-    if (!mounted) return;
-
-    if (hasSeenOnboarding) {
-      // ✅ Onboarding done → Go to login (UserInformation)
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const UserInformation()),
-      );
+    if (!hasSeenOnboarding) {
+      // 🚀 First time → Show onboarding
+      Get.offAll(() => OnboardingScreen(
+        onFinish: () async {
+          await prefs.setBool('hasSeenOnboarding', true);
+          Get.offAll(() => const UserInformation());
+        },
+      ));
     } else {
-      // 🚀 First time → Show onboarding only once
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => OnboardingScreen(
-            onFinish: () async {
-              await prefs.setBool('hasSeenOnboarding', true);
-              if (mounted) {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => const UserInformation()),
-                );
-              }
-            },
-          ),
-        ),
-      );
+      // ✅ Onboarding done → Go to login
+      Get.offAll(() => const UserInformation());
     }
   }
 

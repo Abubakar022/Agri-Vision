@@ -2,13 +2,13 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'package:agri_vision/src/presentation/AppConstant/user_session.dart';
 import 'package:agri_vision/src/presentation/screens/Navigation/navigation.dart';
+import 'package:agri_vision/src/presentation/screens/flow/user_information.dart';
 
 class OtpVerifyPage extends StatefulWidget {
   final String email;
@@ -23,22 +23,32 @@ class OtpVerifyPage extends StatefulWidget {
 }
 
 class _OtpVerifyPageState extends State<OtpVerifyPage> {
-  final TextEditingController _otpController = TextEditingController();
+  late TextEditingController _otpController;
   bool _isLoading = false;
   bool _resendLoading = false;
   int _resendCooldown = 60;
   Timer? _timer;
+  bool _isDisposed = false;
 
   @override
   void initState() {
     super.initState();
+    _otpController = TextEditingController();
+    _isDisposed = false;
     _startTimer();
   }
 
   void _startTimer() {
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_isDisposed) {
+        timer.cancel();
+        return;
+      }
+      
       if (_resendCooldown > 0) {
-        setState(() => _resendCooldown--);
+        if (mounted && !_isDisposed) {
+          setState(() => _resendCooldown--);
+        }
       } else {
         timer.cancel();
       }
@@ -64,15 +74,21 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
         snackPosition: SnackPosition.TOP,
         borderRadius: 12,
         margin: const EdgeInsets.all(16),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       ),
     );
   }
 
   Future<void> _verifyOtp() async {
+    if (_isDisposed || !mounted) return;
     if (_isLoading) return;
     
-    String otp = _otpController.text.trim();
+    String otp;
+    try {
+      otp = _otpController.text.trim();
+    } catch (e) {
+      return;
+    }
+    
     if (otp.length != 6) {
       _showSnackbar('6 ہندسوں کا OTP درج کریں', Colors.orange);
       return;
@@ -88,18 +104,15 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
         body: jsonEncode({'email': widget.email, 'otp': otp}),
       ).timeout(const Duration(seconds: 30));
 
+      if (_isDisposed) return;
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         
         if (data['status'] == 'success' || data['success'] == true) {
-          // Save session
-          final prefs = await SharedPreferences.getInstance();
+          // ✅ FIXED LINE HERE
           final userId = data['user']['uId'] ?? 'user_${DateTime.now().millisecondsSinceEpoch}';
-          
-          await prefs.setString('userId', userId);
-          await prefs.setString('userEmail', widget.email);
-          await prefs.setBool('isLoggedIn', true);
-          UserSession.uid = userId;
+          await UserSession.saveLogin(userId, widget.email);
 
           _showSnackbar('کامیابی سے لاگ ان ہو گئے!', const Color(0xFF02A96C));
 
@@ -115,13 +128,14 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
     } catch (e) {
       _showSnackbar('غلط OTP۔ دوبارہ کوشش کریں۔', Colors.red);
     } finally {
-      if (mounted) {
+      if (!_isDisposed && mounted) {
         setState(() => _isLoading = false);
       }
     }
   }
 
   Future<void> _resendOtp() async {
+    if (_isDisposed || !mounted) return;
     if (_resendCooldown > 0) return;
     if (_resendLoading) return;
 
@@ -135,11 +149,12 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
         body: jsonEncode({'email': widget.email}),
       ).timeout(const Duration(seconds: 30));
 
+      if (_isDisposed) return;
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         
         if (data['status'] == 'success' || data['success'] == true) {
-          // Reset cooldown
           setState(() {
             _resendCooldown = 60;
             _resendLoading = false;
@@ -156,16 +171,28 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
     } catch (e) {
       _showSnackbar('دوبارہ بھیجنے میں ناکامی', Colors.red);
     } finally {
-      if (mounted) {
+      if (!_isDisposed && mounted) {
         setState(() => _resendLoading = false);
       }
     }
   }
 
+  void _changeEmail() {
+    if (_isDisposed) return;
+    Get.off(() => const UserInformation());
+  }
+
   @override
   void dispose() {
+    _isDisposed = true;
     _timer?.cancel();
-    _otpController.dispose();
+    try {
+      if (_otpController.hasListeners) {
+        _otpController.dispose();
+      }
+    } catch (e) {
+      debugPrint("Error disposing controller: $e");
+    }
     super.dispose();
   }
 
@@ -174,11 +201,36 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
     return SafeArea(
       child: Scaffold(
         backgroundColor: const Color(0xFFFDF8E3),
+        appBar: AppBar(
+          backgroundColor: const Color(0xFFFDF8E3),
+          elevation: 0,
+          centerTitle: true,
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                "ایگری",
+                style: GoogleFonts.vazirmatn(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF02A96C),
+                ),
+              ),
+              Text(
+                " ویژن",
+                style: GoogleFonts.vazirmatn(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFFFFA726),
+                ),
+              ),
+            ],
+          ),
+        ),
         body: Directionality(
           textDirection: TextDirection.rtl,
           child: Stack(
             children: [
-              // Simple background
               Positioned(
                 top: -50,
                 right: -50,
@@ -198,7 +250,6 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Header with Urdu heading and email
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
@@ -232,7 +283,6 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
 
                       const SizedBox(height: 30),
 
-                      // OTP Input
                       Directionality(
                         textDirection: TextDirection.ltr,
                         child: PinCodeTextField(
@@ -249,22 +299,22 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
                             borderRadius: BorderRadius.circular(10),
                             fieldHeight: 60,
                             fieldWidth: 50,
-                            activeFillColor: Colors.white,
-                            inactiveFillColor: Colors.white,
-                            selectedFillColor: Colors.white,
                             activeColor: const Color(0xFF02A96C),
                             inactiveColor: Colors.grey,
                             selectedColor: const Color(0xFF02A96C),
                           ),
                           onCompleted: (value) {
-                            _verifyOtp();
+                            Future.delayed(const Duration(milliseconds: 100), () {
+                              if (mounted && !_isDisposed) {
+                                _verifyOtp();
+                              }
+                            });
                           },
                         ),
                       ),
 
                       const SizedBox(height: 20),
 
-                      // Verify Button
                       SizedBox(
                         width: double.infinity,
                         height: 56,
@@ -277,7 +327,11 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
                           ),
                           onPressed: _isLoading ? null : _verifyOtp,
                           child: _isLoading
-                              ? const CircularProgressIndicator(color: Colors.white)
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(color: Colors.white),
+                                )
                               : Text(
                                   'تصدیق کریں',
                                   style: GoogleFonts.vazirmatn(
@@ -291,22 +345,23 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
 
                       const SizedBox(height: 20),
 
-                      // Resend OTP
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           if (_resendCooldown > 0)
                             Text(
                               "دوبارہ بھیجیں ($_resendCooldown s)",
-                              style: GoogleFonts.vazirmatn(
-                                color: Colors.grey,
-                              ),
+                              style: GoogleFonts.vazirmatn(color: Colors.grey),
                             )
                           else
                             TextButton(
                               onPressed: _resendLoading ? null : _resendOtp,
                               child: _resendLoading
-                                  ? const CircularProgressIndicator()
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(),
+                                    )
                                   : Text(
                                       "دوبارہ OTP بھیجیں",
                                       style: GoogleFonts.vazirmatn(
@@ -320,58 +375,16 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
 
                       const SizedBox(height: 20),
 
-                      // FIXED: Email Change Button
                       TextButton.icon(
-                        icon: const Icon(Icons.arrow_back, size: 18),
+                        icon: const Icon(Icons.email, size: 18),
                         label: Text(
                           "ای میل تبدیل کریں",
                           style: GoogleFonts.vazirmatn(
                             fontWeight: FontWeight.w600,
+                            color: const Color(0xFF02A96C),
                           ),
                         ),
-                        onPressed: () {
-                          Get.back(); // This will go back to email entry screen
-                        },
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      // Instructions with RIGHT-ALIGNED heading
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.green[50],
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.green[100]!),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // RIGHT-ALIGNED heading
-                            Text(
-                              "ہدایات:",
-                              style: GoogleFonts.vazirmatn(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                                color: Colors.green[800],
-                              ),
-                              textAlign: TextAlign.right,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              "1. اپنی ای میل کھولیں (Gmail, Yahoo, Hotmail)\n"
-                              "2. Agri Vision کا میسج ڈھونڈیں\n"
-                              "3. 6 ہندسوں کا OTP کاپی کریں\n"
-                              "4. اوپر باکس میں OTP ڈالیں\n"
-                              "5. 'تصدیق کریں' پر کلک کریں",
-                              style: GoogleFonts.vazirmatn(
-                                color: Colors.green[700],
-                              ),
-                              textAlign: TextAlign.right,
-                            ),
-                          ],
-                        ),
+                        onPressed: _changeEmail,
                       ),
                     ],
                   ),
