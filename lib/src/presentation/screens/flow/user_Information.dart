@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
-import 'package:agri_vision/src/presentation/AppConstant/Colors.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:agri_vision/src/presentation/screens/flow/otp_verify_page.dart';
 
 class UserInformation extends StatefulWidget {
@@ -17,328 +16,331 @@ class _UserInformationState extends State<UserInformation> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   bool _isLoading = false;
-  String? _backendError;
+
+  void _showSnackbar(String message, Color color) {
+    Get.showSnackbar(
+      GetSnackBar(
+        messageText: Directionality(
+          textDirection: TextDirection.rtl,
+          child: Text(
+            message,
+            style: GoogleFonts.vazirmatn(
+              color: Colors.white,
+              fontSize: 16,
+            ),
+            textAlign: TextAlign.right,
+          ),
+        ),
+        backgroundColor: color,
+        duration: const Duration(seconds: 3),
+        snackPosition: SnackPosition.TOP,
+        borderRadius: 12,
+        margin: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      ),
+    );
+  }
 
   Future<void> _requestEmailOTP() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
       _isLoading = true;
-      _backendError = null;
     });
 
     try {
       String email = _emailController.text.trim();
       
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const CircularProgressIndicator(color: Colors.white),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'OTP بھیجا جا رہا ہے...',
-                  style: TextStyle(color: Colors.white),
-                ),
-              ),
-            ],
-          ),
-          backgroundColor: Appcolor.green,
-          duration: const Duration(seconds: 3),
-        ),
-      );
-
-      // Replace with your backend URL
-      final url = Uri.parse('http://10.0.2.2:5000/request-otp'); // For emulator
-      // For real device: http://YOUR_SERVER_IP:5000/api/auth/request-otp
+      final url = Uri.parse('http://10.0.2.2:5000/request-otp');
       
       final response = await http.post(
         url,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'email': email,
-        }),
-      );
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email}),
+      ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         
         if (data['status'] == 'success' || data['success'] == true) {
-          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          _showSnackbar('OTP آپ کے ای میل پر بھیج دیا گیا ہے', const Color(0xFF02A96C));
           
-          Get.off(() => OtpVerifyPage(
-            email: email,
-          ));
+          await Future.delayed(const Duration(milliseconds: 500));
+          
+          Get.off(() => OtpVerifyPage(email: email));
         } else {
-          _showErrorSnackBar(data['message'] ?? 'OTP بھیجنے میں ناکامی');
+          throw data['message'] ?? 'OTP بھیجنے میں ناکامی';
         }
       } else {
-        final errorData = jsonDecode(response.body);
-        _showErrorSnackBar(errorData['message'] ?? 'سرور سے جواب نہیں ملا');
+        throw 'سرور سے جواب نہیں ملا';
       }
 
     } catch (e) {
-      String errorMessage = 'نیٹ ورک کنکشن میں مسئلہ';
-      if (e.toString().contains('Connection refused')) {
-        errorMessage = 'سرور سے کنکشن نہیں ہو پا رہا۔ براہ کرم سرور چیک کریں';
-      } else if (e.toString().contains('Failed host lookup')) {
-        errorMessage = 'انٹرنیٹ کنکشن نہیں ہے';
-      }
-      _showErrorSnackBar('$errorMessage: $e');
+      _showSnackbar('نیٹ ورک مسئلہ۔ دوبارہ کوشش کریں۔', Colors.red);
     } finally {
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
       }
     }
   }
 
-  void _showErrorSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 4),
-        action: SnackBarAction(
-          label: 'ٹھیک ہے',
-          textColor: Colors.white,
-          onPressed: () {
-            ScaffoldMessenger.of(context).hideCurrentSnackBar();
-          },
-        ),
+  void _showEmailInfo() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: AlertDialog(
+            title: Text(
+              "ای میل کے بارے میں معلومات",
+              style: GoogleFonts.vazirmatn(
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.right,
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    "ای میل کیا ہے؟",
+                    style: GoogleFonts.vazirmatn(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.right,
+                  ),
+                  const SizedBox(height: 10),
+                  
+                  Text(
+                    "ای میل آپ کا ڈیجیٹل پتہ ہے جو:",
+                    style: GoogleFonts.vazirmatn(),
+                    textAlign: TextAlign.right,
+                  ),
+                  const SizedBox(height: 8),
+                  
+                  _buildRightAlignedPoint("آپ کے فون میں Gmail ایپ پر ہوتا ہے"),
+                  _buildRightAlignedPoint("Yahoo Mail یا Hotmail پر بھی ہوتا ہے"),
+                  _buildRightAlignedPoint("username@gmail.com کی طرح لگتا ہے"),
+                  
+                  const SizedBox(height: 15),
+                  Text(
+                    "ای میل میں کیا ملے گا؟",
+                    style: GoogleFonts.vazirmatn(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.right,
+                  ),
+                  const SizedBox(height: 8),
+                  
+                  _buildRightAlignedPoint("6 ہندسوں کا OTP کوڈ ملے گا"),
+                  _buildRightAlignedPoint("Agri Vision سے میسج آئے گا"),
+                  _buildRightAlignedPoint("کوڈ 10 منٹ کے لیے درست ہے"),
+                  
+                  const SizedBox(height: 15),
+                  Text(
+                    "مثالیں:",
+                    style: GoogleFonts.vazirmatn(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.right,
+                  ),
+                  const SizedBox(height: 8),
+                  
+                  _buildRightAlignedPoint("kisaan123@gmail.com"),
+                  _buildRightAlignedPoint("farmer@yahoo.com"),
+                  _buildRightAlignedPoint("mohammad@gmail.com"),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Get.back(),
+                child: Text("ٹھیک ہے", style: GoogleFonts.vazirmatn()),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildRightAlignedPoint(String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              text,
+              style: GoogleFonts.vazirmatn(),
+              textAlign: TextAlign.right,
+            ),
+          ),
+          const SizedBox(width: 8),
+          const Icon(Icons.check_circle, size: 16, color: Colors.green),
+        ],
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
+    return SafeArea(
       child: Scaffold(
-        body: Stack(
-          fit: StackFit.expand,
-          children: [
-            Image.asset(
-              'assets/images/userInformation.jpeg',
-              fit: BoxFit.cover,
-            ),
-            Container(color: Colors.black.withAlpha(150)),
-            Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Form(
-                  key: _formKey,
+        backgroundColor: const Color(0xFFFDF8E3),
+        body: Directionality(
+          textDirection: TextDirection.rtl,
+          child: Stack(
+            children: [
+              // Simple background
+              Positioned(
+                top: -50,
+                right: -50,
+                child: Container(
+                  width: 200,
+                  height: 200,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF02A96C).withAlpha(20),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+
+              Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
                   child: Column(
-                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Align(
-                        alignment: Alignment.centerRight,
+                      // SINGLE HEADING - Updated
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF02A96C),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            const Icon(Icons.email, size: 40, color: Colors.white),
+                            const SizedBox(height: 10),
                             Text(
-                              "ای میل تصدیق",
-                              style: TextStyle(
-                                fontSize: 26,
+                              "OTP حاصل کرنے کے لیے ای میل درج کریں",
+                              style: GoogleFonts.vazirmatn(
+                                fontSize: 20,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
                               ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              "اپنا ای میل درج کریں، ہم آپ کو تصدیقی کوڈ بھیجیں گے",
-                              textAlign: TextAlign.right,
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.white,
-                              ),
+                              textAlign: TextAlign.center,
                             ),
                           ],
                         ),
                       ),
+
                       const SizedBox(height: 30),
 
-                      // Email Input Field
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white.withAlpha(50),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: Colors.white70),
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                        child: TextFormField(
-                          controller: _emailController,
-                          keyboardType: TextInputType.emailAddress,
-                          textDirection: TextDirection.ltr,
-                          textAlign: TextAlign.left,
-                          style: const TextStyle(color: Colors.white, fontSize: 16),
-                          decoration: InputDecoration(
-                            hintText: 'example@gmail.com',
-                            hintStyle: const TextStyle(color: Colors.white38),
-                            labelText: 'اپنا ای میل درج کریں',
-                            labelStyle: const TextStyle(color: Colors.white70),
-                            border: InputBorder.none,
-                            suffixIcon: _emailController.text.isNotEmpty
-                                ? IconButton(
-                                    icon: const Icon(Icons.close, color: Colors.white70, size: 20),
-                                    onPressed: () {
-                                      setState(() => _emailController.clear());
-                                    },
-                                  )
-                                : null,
-                            contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                            prefixIcon: const Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 12),
-                              child: Icon(Icons.email, color: Colors.white70, size: 20),
-                            ),
-                          ),
-                          onChanged: (_) {
-                            setState(() {
-                              _backendError = null;
-                            });
-                          },
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'براہ کرم اپنا ای میل درج کریں';
-                            }
-                            
-                            final emailRegex = RegExp(
-                              r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-                            );
-                            
-                            if (!emailRegex.hasMatch(value.trim())) {
-                              return 'براہ کرم درست ای میل درج کریں';
-                            }
-                            
-                            return null;
-                          },
-                        ),
-                      ),
-                      
-                      if (_backendError != null) ...[
-                        const SizedBox(height: 10),
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.red.withAlpha(30),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.red.withAlpha(100)),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.error, color: Colors.red, size: 16),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  _backendError!,
-                                  style: const TextStyle(color: Colors.red, fontSize: 12),
+                      // Email Input
+                      Form(
+                        key: _formKey,
+                        child: Column(
+                          children: [
+                            Directionality(
+                              textDirection: TextDirection.ltr,
+                              child: TextFormField(
+                                controller: _emailController,
+                                keyboardType: TextInputType.emailAddress,
+                                textAlign: TextAlign.left,
+                                style: GoogleFonts.vazirmatn(
+                                  fontSize: 16,
                                 ),
+                                // Prevent spaces in email
+                                inputFormatters: [],
+                                decoration: InputDecoration(
+                                  labelText: "ای میل ایڈریس",
+                                  labelStyle: GoogleFonts.vazirmatn(),
+                                  hintText: "مثال: kisaan@gmail.com",
+                                  hintStyle: GoogleFonts.vazirmatn(color: Colors.grey),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  prefixIcon: IconButton(
+                                    icon: const Icon(Icons.help_outline),
+                                    onPressed: _showEmailInfo,
+                                    tooltip: 'ای میل کی معلومات',
+                                  ),
+                                  suffixIcon: _emailController.text.isNotEmpty
+                                      ? IconButton(
+                                          icon: const Icon(Icons.clear),
+                                          onPressed: () => setState(() => _emailController.clear()),
+                                        )
+                                      : null,
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.trim().isEmpty) {
+                                    return 'ای میل درج کریں';
+                                  }
+                                  // Check for spaces
+                                  if (value.contains(' ')) {
+                                    return 'ای میل میں خالی جگہ نہیں ہونی چاہیے';
+                                  }
+                                  if (!value.contains('@')) {
+                                    return '@ شامل کریں';
+                                  }
+                                  if (!value.contains('.')) {
+                                    return 'غلط ای میل ایڈریس';
+                                  }
+                                  return null;
+                                },
                               ),
-                            ],
-                          ),
-                        ),
-                      ],
-                      
-                      const SizedBox(height: 8),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: Text(
-                          "OTP آپ کے ای میل پر بھیجا جائے گا",
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.white60,
-                          ),
+                            ),
+
+                            const SizedBox(height: 20),
+
+                            // Info Button
+                            TextButton.icon(
+                              icon: const Icon(Icons.info, size: 18),
+                              label: Text(
+                                "ای میل کے بارے میں معلومات",
+                                style: GoogleFonts.vazirmatn(),
+                              ),
+                              onPressed: _showEmailInfo,
+                            ),
+                          ],
                         ),
                       ),
-                      
+
                       const SizedBox(height: 30),
 
                       // Send OTP Button
                       SizedBox(
                         width: double.infinity,
+                        height: 56,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Appcolor.green,
+                            backgroundColor: const Color(0xFF02A96C),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            elevation: 2,
                           ),
                           onPressed: _isLoading ? null : _requestEmailOTP,
                           child: _isLoading
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
+                              ? const CircularProgressIndicator(color: Colors.white)
+                              : Text(
+                                  'OTP بھیجیں',
+                                  style: GoogleFonts.vazirmatn(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
                                     color: Colors.white,
                                   ),
-                                )
-                              : Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    const Icon(
-                                      Icons.email,
-                                      color: Colors.white,
-                                      size: 20,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      'OTP بھیجیں',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
                                 ),
-                        ),
-                      ),
-
-                      // Network Configuration Help
-                      const SizedBox(height: 20),
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withAlpha(20),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              "نیٹ ورک کنفیگریشن:",
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.white70,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              "ایمیولیٹر: http://10.0.2.2:5000\nاصل ڈیوائس: http://YOUR_PC_IP:5000",
-                              textAlign: TextAlign.right,
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: Colors.white60,
-                              ),
-                            ),
-                          ],
                         ),
                       ),
                     ],
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
