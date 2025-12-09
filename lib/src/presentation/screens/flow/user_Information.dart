@@ -84,111 +84,41 @@ class _UserInformationState extends State<UserInformation> {
     }
   }
 
-  void _showEmailInfo() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: AlertDialog(
-            title: Text(
-              "ای میل کے بارے میں معلومات",
-              style: GoogleFonts.vazirmatn(
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.right,
-            ),
-            content: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    "ای میل کیا ہے؟",
-                    style: GoogleFonts.vazirmatn(
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.right,
-                  ),
-                  const SizedBox(height: 10),
-                  
-                  Text(
-                    "ای میل آپ کا ڈیجیٹل پتہ ہے جو:",
-                    style: GoogleFonts.vazirmatn(),
-                    textAlign: TextAlign.right,
-                  ),
-                  const SizedBox(height: 8),
-                  
-                  _buildRightAlignedPoint("آپ کے فون میں Gmail ایپ پر ہوتا ہے"),
-                  _buildRightAlignedPoint("Yahoo Mail یا Hotmail پر بھی ہوتا ہے"),
-                  _buildRightAlignedPoint("username@gmail.com کی طرح لگتا ہے"),
-                  
-                  const SizedBox(height: 15),
-                  Text(
-                    "ای میل میں کیا ملے گا؟",
-                    style: GoogleFonts.vazirmatn(
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.right,
-                  ),
-                  const SizedBox(height: 8),
-                  
-                  _buildRightAlignedPoint("6 ہندسوں کا OTP کوڈ ملے گا"),
-                  _buildRightAlignedPoint("Agri Vision سے میسج آئے گا"),
-                  _buildRightAlignedPoint("کوڈ 10 منٹ کے لیے درست ہے"),
-                  
-                  const SizedBox(height: 15),
-                  Text(
-                    "مثالیں:",
-                    style: GoogleFonts.vazirmatn(
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.right,
-                  ),
-                  const SizedBox(height: 8),
-                  
-                  _buildRightAlignedPoint("kisaan123@gmail.com"),
-                  _buildRightAlignedPoint("farmer@yahoo.com"),
-                  _buildRightAlignedPoint("mohammad@gmail.com"),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Get.back(),
-                child: Text("ٹھیک ہے", style: GoogleFonts.vazirmatn()),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildRightAlignedPoint(String text) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              text,
-              style: GoogleFonts.vazirmatn(),
-              textAlign: TextAlign.right,
-            ),
-          ),
-          const SizedBox(width: 8),
-          const Icon(Icons.check_circle, size: 16, color: Colors.green),
-        ],
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
         backgroundColor: const Color(0xFFFDF8E3),
+        // ADDED APP BAR
+        appBar: AppBar(
+          backgroundColor: const Color(0xFFFDF8E3),
+          elevation: 0,
+          centerTitle: true,
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                 " ویژن",
+                
+                style: GoogleFonts.vazirmatn(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF02A96C),
+                ),
+              ),
+              Text(
+               "ایگری",
+                style: GoogleFonts.vazirmatn(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFFFFA726),
+                ),
+              ),
+            ],
+          ),
+         
+        ),
         body: Directionality(
           textDirection: TextDirection.rtl,
           child: Stack(
@@ -253,21 +183,15 @@ class _UserInformationState extends State<UserInformation> {
                                 style: GoogleFonts.vazirmatn(
                                   fontSize: 16,
                                 ),
-                                // Prevent spaces in email
-                                inputFormatters: [],
                                 decoration: InputDecoration(
                                   labelText: "ای میل ایڈریس",
                                   labelStyle: GoogleFonts.vazirmatn(),
-                                  hintText: "مثال: kisaan@gmail.com",
+                                  hintText: "kisaan@gmail.com",
                                   hintStyle: GoogleFonts.vazirmatn(color: Colors.grey),
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  prefixIcon: IconButton(
-                                    icon: const Icon(Icons.help_outline),
-                                    onPressed: _showEmailInfo,
-                                    tooltip: 'ای میل کی معلومات',
-                                  ),
+                                 
                                   suffixIcon: _emailController.text.isNotEmpty
                                       ? IconButton(
                                           icon: const Icon(Icons.clear),
@@ -297,14 +221,7 @@ class _UserInformationState extends State<UserInformation> {
                             const SizedBox(height: 20),
 
                             // Info Button
-                            TextButton.icon(
-                              icon: const Icon(Icons.info, size: 18),
-                              label: Text(
-                                "ای میل کے بارے میں معلومات",
-                                style: GoogleFonts.vazirmatn(),
-                              ),
-                              onPressed: _showEmailInfo,
-                            ),
+                           
                           ],
                         ),
                       ),
