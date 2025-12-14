@@ -1,5 +1,3 @@
-import 'dart:ffi';
-
 import 'package:agri_vision/src/presentation/screens/flow/user_Information.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -9,21 +7,31 @@ class OnboardingController extends GetxController {
 
   final pageController = PageController();
   Rx<int> currentPageIndex = 0.obs;
+  
+  // ✅ ADD THIS - Callback for when onboarding finishes
+  VoidCallback? onFinishCallback;
+
+  // ✅ ADD THIS - Method to set the callback
+  void setOnFinishCallback(VoidCallback callback) {
+    onFinishCallback = callback;
+  }
 
   void updatePageIndicator(index) => currentPageIndex.value = index;
 
   void dotNavigation(index) {
     currentPageIndex.value = index;
-    //   pageController.animateToPage(index,
-    //       duration: const Duration(milliseconds: 500), curve: Curves.linear);
-    // }
     pageController.jumpToPage(index);
   }
 
   void nextPage() {
     if (currentPageIndex.value >= 2) {
-      // Remove all previous routes to prevent going back
-      Get.offAll(() => UserInformation());
+      // ✅ USE THE CALLBACK instead of direct navigation
+      if (onFinishCallback != null) {
+        onFinishCallback!();
+      } else {
+        // Fallback if callback not set
+        Get.offAll(() => const UserInformation());
+      }
     } else {
       var page = currentPageIndex.value + 1;
       pageController.jumpToPage(page);
@@ -31,6 +39,18 @@ class OnboardingController extends GetxController {
   }
 
   void skipPage() {
-   Get.offAll(() => UserInformation());
+    // ✅ USE THE CALLBACK instead of direct navigation
+    if (onFinishCallback != null) {
+      onFinishCallback!();
+    } else {
+      // Fallback if callback not set
+      Get.offAll(() => const UserInformation());
+    }
+  }
+
+  @override
+  void onClose() {
+    pageController.dispose();
+    super.onClose();
   }
 }

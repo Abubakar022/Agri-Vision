@@ -9,6 +9,7 @@ class UserSession {
     await prefs.remove('userId');
     await prefs.remove('userEmail');
     await prefs.setBool('isLoggedIn', false);
+    await prefs.setBool('otpVerified', false); // Clear OTP verification
     uid = null;
   }
   
@@ -23,5 +24,21 @@ class UserSession {
   static Future<bool> isLoggedIn() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool('isLoggedIn') ?? false;
+  }
+  
+  // ✅ ADD THIS METHOD to check OTP verification status
+  static Future<bool> isOtpVerified() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('otpVerified') ?? false;
+  }
+  
+  static Future<String?> getUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('userId');
+  }
+  
+  static Future<String?> getUserEmail() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('userEmail');
   }
 }

@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:agri_vision/src/presentation/AppConstant/user_session.dart';
 import 'package:agri_vision/src/presentation/screens/Navigation/navigation.dart';
@@ -97,7 +98,7 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
     setState(() => _isLoading = true);
 
     try {
-      final url = Uri.parse('https://agri-node-backend-1075549714370.us-central1.run.app/verify-otp');
+      final url = Uri.parse('https://agri-vision-backend-1075549714370.us-central1.run.app/verify-otp');
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
@@ -113,6 +114,10 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
           // ✅ FIXED LINE HERE
           final userId = data['user']['uId'] ?? 'user_${DateTime.now().millisecondsSinceEpoch}';
           await UserSession.saveLogin(userId, widget.email);
+
+          // ✅ ADD THIS LINE - Mark OTP as verified
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setBool('otpVerified', true);
 
           _showSnackbar('کامیابی سے لاگ ان ہو گئے!', const Color(0xFF02A96C));
 
@@ -142,7 +147,7 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
     setState(() => _resendLoading = true);
 
     try {
-      final url = Uri.parse('https://agri-node-backend-1075549714370.us-central1.run.app/request-otp');
+      final url = Uri.parse('https://agri-vision-backend-1075549714370.us-central1.run.app/request-otp');
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
@@ -179,6 +184,8 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
 
   void _changeEmail() {
     if (_isDisposed) return;
+    // Clear any partial login state when changing email
+    UserSession.logout();
     Get.off(() => const UserInformation());
   }
 

@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:agri_vision/src/presentation/screens/flow/otp_verify_page.dart';
 
 class UserInformation extends StatefulWidget {
@@ -16,6 +17,18 @@ class _UserInformationState extends State<UserInformation> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _clearPartialLoginState();
+  }
+
+  Future<void> _clearPartialLoginState() async {
+    // Clear any partial login state when user comes to this page
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('otpVerified', false);
+  }
 
   void _showSnackbar(String message, Color color) {
     Get.showSnackbar(
@@ -51,7 +64,7 @@ class _UserInformationState extends State<UserInformation> {
     try {
       String email = _emailController.text.trim();
       
-      final url = Uri.parse('https://agri-node-backend-1075549714370.us-central1.run.app/request-otp');
+      final url = Uri.parse('https://agri-vision-backend-1075549714370.us-central1.run.app/request-otp');
       
       final response = await http.post(
         url,
@@ -84,13 +97,11 @@ class _UserInformationState extends State<UserInformation> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
         backgroundColor: const Color(0xFFFDF8E3),
-        // ADDED APP BAR
         appBar: AppBar(
           backgroundColor: const Color(0xFFFDF8E3),
           elevation: 0,
@@ -99,8 +110,7 @@ class _UserInformationState extends State<UserInformation> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                 " ویژن",
-                
+                " ویژن",
                 style: GoogleFonts.vazirmatn(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -108,7 +118,7 @@ class _UserInformationState extends State<UserInformation> {
                 ),
               ),
               Text(
-               "ایگری",
+                "ایگری",
                 style: GoogleFonts.vazirmatn(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -117,13 +127,11 @@ class _UserInformationState extends State<UserInformation> {
               ),
             ],
           ),
-         
         ),
         body: Directionality(
           textDirection: TextDirection.rtl,
           child: Stack(
             children: [
-              // Simple background
               Positioned(
                 top: -50,
                 right: -50,
@@ -143,7 +151,6 @@ class _UserInformationState extends State<UserInformation> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // SINGLE HEADING - Updated
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
@@ -169,7 +176,6 @@ class _UserInformationState extends State<UserInformation> {
 
                       const SizedBox(height: 30),
 
-                      // Email Input
                       Form(
                         key: _formKey,
                         child: Column(
@@ -191,7 +197,6 @@ class _UserInformationState extends State<UserInformation> {
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                 
                                   suffixIcon: _emailController.text.isNotEmpty
                                       ? IconButton(
                                           icon: const Icon(Icons.clear),
@@ -203,7 +208,6 @@ class _UserInformationState extends State<UserInformation> {
                                   if (value == null || value.trim().isEmpty) {
                                     return 'ای میل درج کریں';
                                   }
-                                  // Check for spaces
                                   if (value.contains(' ')) {
                                     return 'ای میل میں خالی جگہ نہیں ہونی چاہیے';
                                   }
@@ -217,18 +221,12 @@ class _UserInformationState extends State<UserInformation> {
                                 },
                               ),
                             ),
-
-                            const SizedBox(height: 20),
-
-                            // Info Button
-                           
                           ],
                         ),
                       ),
 
                       const SizedBox(height: 30),
 
-                      // Send OTP Button
                       SizedBox(
                         width: double.infinity,
                         height: 56,
