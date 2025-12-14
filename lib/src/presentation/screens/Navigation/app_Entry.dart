@@ -9,7 +9,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:get/get.dart';
 
 class SplashController extends StatefulWidget {
-  const SplashController({super.key});
+  final SharedPreferences prefs;
+  const SplashController({super.key, required this.prefs});
 
   @override
   State<SplashController> createState() => _SplashControllerState();
@@ -19,47 +20,32 @@ class _SplashControllerState extends State<SplashController> {
   @override
   void initState() {
     super.initState();
-    _navigateAfterSplash();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _navigateAfterSplash();
+    });
   }
 
   Future<void> _navigateAfterSplash() async {
-    await Future.delayed(const Duration(seconds: 3));
+    await Future.delayed(const Duration(seconds: 1)); // splash visible
 
-    final prefs = await SharedPreferences.getInstance();
-    
-    // Always check onboarding status first
-    final hasSeenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
-    
-    // Check login status
-    final isLoggedIn = await UserSession.isLoggedIn();
-    final isOtpVerified = prefs.getBool('otpVerified') ?? false;
+    final hasSeenOnboarding =
+        widget.prefs.getBool('hasSeenOnboarding') ?? false;
+    final isLoggedIn = widget.prefs.getBool('isLoggedIn') ?? false;
+    final isOtpVerified = widget.prefs.getBool('otpVerified') ?? false;
 
-    print('DEBUG: hasSeenOnboarding = $hasSeenOnboarding');
-    print('DEBUG: isLoggedIn = $isLoggedIn');
-    print('DEBUG: isOtpVerified = $isOtpVerified');
+    if (!mounted) return;
 
     if (isLoggedIn && isOtpVerified) {
-      // ✅ User is properly logged in and verified
-      print('DEBUG: Redirecting to HomeNavigation');
-      if (!mounted) return;
       Get.offAll(() => const HomeNavigation());
-      return;
-    }
-
-    // 🔹 User not logged in or not verified
-    if (!hasSeenOnboarding) {
-      // 🚀 First time → Show onboarding
-      print('DEBUG: Redirecting to OnboardingScreen');
+    } else if (!hasSeenOnboarding) {
       Get.offAll(() => OnboardingScreen(
-        onFinish: () async {
-          // Save the flag before navigating
-          await prefs.setBool('hasSeenOnboarding', true);
-          Get.offAll(() => const UserInformation());
-        },
-      ));
+            onFinish: () async {
+              await widget.prefs.setBool('hasSeenOnboarding', true);
+              if (!mounted) return;
+              Get.offAll(() => const UserInformation());
+            },
+          ));
     } else {
-      // ✅ Onboarding already seen → Go to login
-      print('DEBUG: Redirecting to UserInformation');
       Get.offAll(() => const UserInformation());
     }
   }

@@ -10,24 +10,22 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Initialize SharedPreferences
+
+  // ✅ Initialize SharedPreferences once
   final prefs = await SharedPreferences.getInstance();
-  
-  // Restore user session if exists
-  String? savedUid = prefs.getString('userId');
-  if (savedUid != null) {
-    UserSession.uid = savedUid; // ✅ globally save
-  }
-  
-  // Initialize HistoryController
+
+  // ✅ Restore user session if exists
+  UserSession.uid = prefs.getString('userId');
+
+  // ✅ Initialize controllers
   Get.put(HistoryController());
-  
-  runApp(const MyApp());
+
+  runApp(MyApp(prefs: prefs));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final SharedPreferences prefs;
+  const MyApp({super.key, required this.prefs});
 
   @override
   Widget build(BuildContext context) {
@@ -38,8 +36,8 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const SplashController(),
-      // Remove unnecessary imports at the top to clean up
+      // ✅ Pass prefs to SplashController
+      home: SplashController(prefs: prefs),
     );
   }
 }
