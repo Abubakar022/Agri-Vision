@@ -1,20 +1,13 @@
 import 'package:agri_vision/src/presentation/screens/flow/user_Information.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class OnboardingController extends GetxController {
   static OnboardingController get instance => Get.find();
 
   final pageController = PageController();
   Rx<int> currentPageIndex = 0.obs;
-  
-  // ✅ ADD THIS - Callback for when onboarding finishes
-  VoidCallback? onFinishCallback;
-
-  // ✅ ADD THIS - Method to set the callback
-  void setOnFinishCallback(VoidCallback callback) {
-    onFinishCallback = callback;
-  }
 
   void updatePageIndicator(index) => currentPageIndex.value = index;
 
@@ -23,29 +16,27 @@ class OnboardingController extends GetxController {
     pageController.jumpToPage(index);
   }
 
-  void nextPage() {
+  void nextPage() async {
     if (currentPageIndex.value >= 2) {
-      // ✅ USE THE CALLBACK instead of direct navigation
-      if (onFinishCallback != null) {
-        onFinishCallback!();
-      } else {
-        // Fallback if callback not set
-        Get.offAll(() => const UserInformation());
-      }
+      // Save that user has completed onboarding
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('hasSeenOnboarding', true);
+      
+      // Navigate to UserInformation screen
+      Get.offAll(() => const UserInformation());
     } else {
       var page = currentPageIndex.value + 1;
       pageController.jumpToPage(page);
     }
   }
 
-  void skipPage() {
-    // ✅ USE THE CALLBACK instead of direct navigation
-    if (onFinishCallback != null) {
-      onFinishCallback!();
-    } else {
-      // Fallback if callback not set
-      Get.offAll(() => const UserInformation());
-    }
+  void skipPage() async {
+    // Save that user has seen onboarding (even if skipped)
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('hasSeenOnboarding', true);
+    
+    // Navigate to UserInformation screen
+    Get.offAll(() => const UserInformation());
   }
 
   @override

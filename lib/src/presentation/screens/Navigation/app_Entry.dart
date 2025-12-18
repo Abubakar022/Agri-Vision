@@ -39,11 +39,7 @@ class _SplashControllerState extends State<SplashController> {
       Get.offAll(() => const HomeNavigation());
     } else if (!hasSeenOnboarding) {
       Get.offAll(() => OnboardingScreen(
-            onFinish: () async {
-              await widget.prefs.setBool('hasSeenOnboarding', true);
-              if (!mounted) return;
-              Get.offAll(() => const UserInformation());
-            },
+          
           ));
     } else {
       Get.offAll(() => const UserInformation());

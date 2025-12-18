@@ -8,77 +8,72 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:get/get.dart';
 
+// OnboardingScreen.dart - Simplified
 class OnboardingScreen extends StatelessWidget {
-  final VoidCallback onFinish;
-  const OnboardingScreen({super.key, required this.onFinish});
+  const OnboardingScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(OnboardingController());
-    controller.setOnFinishCallback(onFinish);
-
+    
     var size = MediaQuery.of(context).size;
     var width = size.width;
 
     return Scaffold(
-      body: Obx(() {
-        final isLastPage = controller.currentPageIndex.value == 2;
-        
-        return Stack(
-          children: [
-            // PageView
-            PageView(
-              controller: controller.pageController,
-              onPageChanged: controller.updatePageIndicator,
-              children: const [
-                page1(),
-                page2(),
-                page3(),
-              ],
-            ),
+      body: Stack(
+        children: [
+          PageView(
+            controller: controller.pageController,
+            onPageChanged: controller.updatePageIndicator,
+            children: const [
+              page1(),
+              page2(),
+              page3(),
+            ],
+          ),
 
-            // Skip Button
-            Positioned(
-              top: 20,
-              right: 8,
-              child: TextButton(
-                onPressed: () => controller.skipPage(),
-                child: Text(
-                  'چھوڑیں',
-                  style: GoogleFonts.vazirmatn(
-                    color: Appcolor.green,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 17,
-                  ),
+          Positioned(
+            top: 20,
+            right: 8,
+            child: TextButton(
+              onPressed: () => controller.skipPage(),
+              child: Text(
+                'چھوڑیں',
+                style: GoogleFonts.vazirmatn(
+                  color: Appcolor.green,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 17,
                 ),
               ),
             ),
+          ),
 
-            // Page Indicator - Only rebuild the indicator
-            Positioned(
-              bottom: 200,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: SmoothPageIndicator(
-                  controller: controller.pageController,
-                  count: 3,
-                  effect: ExpandingDotsEffect(
-                    activeDotColor: Appcolor.green,
-                    dotHeight: 10,
-                  ),
-                  onDotClicked: controller.dotNavigation,
+          Positioned(
+            bottom: 200,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: SmoothPageIndicator(
+                controller: controller.pageController,
+                count: 3,
+                effect: ExpandingDotsEffect(
+                  activeDotColor: Appcolor.green,
+                  dotHeight: 10,
                 ),
+                onDotClicked: controller.dotNavigation,
               ),
             ),
+          ),
 
-            // Next Button - Now uses the isLastPage from outer Obx
-            Positioned(
-              bottom: 130,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: ElevatedButton.icon(
+          Positioned(
+            bottom: 130,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Obx(() {
+                final isLastPage = controller.currentPageIndex.value == 2;
+                
+                return ElevatedButton.icon(
                   onPressed: () => controller.nextPage(),
                   icon: const Icon(Icons.arrow_left, color: Colors.white),
                   label: Text(
@@ -99,12 +94,12 @@ class OnboardingScreen extends StatelessWidget {
                     elevation: 6,
                     shadowColor: Appcolor.green.withOpacity(0.4),
                   ),
-                ),
-              ),
+                );
+              }),
             ),
-          ],
-        );
-      }),
+          ),
+        ],
+      ),
     );
   }
 }
