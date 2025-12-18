@@ -38,6 +38,7 @@ class MyApp extends StatelessWidget {
       ),
       // ✅ Pass prefs to SplashController
       home: SplashController(prefs: prefs),
+      
     );
   }
 }
