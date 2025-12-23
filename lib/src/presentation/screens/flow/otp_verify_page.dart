@@ -297,6 +297,7 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
                           length: 6,
                           controller: _otpController,
                           keyboardType: TextInputType.number,
+                           cursorColor: const Color(0xFF02A96C),
                           textStyle: GoogleFonts.vazirmatn(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,

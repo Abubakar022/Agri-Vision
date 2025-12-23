@@ -180,47 +180,69 @@ class _UserInformationState extends State<UserInformation> {
                         key: _formKey,
                         child: Column(
                           children: [
-                            Directionality(
-                              textDirection: TextDirection.ltr,
-                              child: TextFormField(
-                                controller: _emailController,
-                                keyboardType: TextInputType.emailAddress,
-                                textAlign: TextAlign.left,
-                                style: GoogleFonts.vazirmatn(
-                                  fontSize: 16,
-                                ),
-                                decoration: InputDecoration(
-                                  labelText: "ای میل ایڈریس",
-                                  labelStyle: GoogleFonts.vazirmatn(),
-                                  hintText: "kisaan@gmail.com",
-                                  hintStyle: GoogleFonts.vazirmatn(color: Colors.grey),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  suffixIcon: _emailController.text.isNotEmpty
-                                      ? IconButton(
-                                          icon: const Icon(Icons.clear),
-                                          onPressed: () => setState(() => _emailController.clear()),
-                                        )
-                                      : null,
-                                ),
-                                validator: (value) {
-                                  if (value == null || value.trim().isEmpty) {
-                                    return 'ای میل درج کریں';
-                                  }
-                                  if (value.contains(' ')) {
-                                    return 'ای میل میں خالی جگہ نہیں ہونی چاہیے';
-                                  }
-                                  if (!value.contains('@')) {
-                                    return '@ شامل کریں';
-                                  }
-                                  if (!value.contains('.')) {
-                                    return 'غلط ای میل ایڈریس';
-                                  }
-                                  return null;
-                                },
-                              ),
-                            ),
+                           Directionality(
+  textDirection: TextDirection.ltr,
+  child: TextFormField(
+    controller: _emailController,
+    keyboardType: TextInputType.emailAddress,
+    textAlign: TextAlign.left,
+    style: GoogleFonts.vazirmatn(
+      fontSize: 16,
+    ),
+    decoration: InputDecoration(
+      labelText: "ای میل ایڈریس",
+      labelStyle: GoogleFonts.vazirmatn(),
+      hintText: "kisaan@gmail.com",
+      hintStyle: GoogleFonts.vazirmatn(color: Colors.grey),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.grey),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.grey),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFF02A96C), width: 2),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.red),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.red, width: 2),
+      ),
+      suffixIcon: _emailController.text.isNotEmpty
+          ? IconButton(
+              icon: const Icon(Icons.clear),
+              onPressed: () => setState(() => _emailController.clear()),
+            )
+          : null,
+      prefixIcon: const Padding(
+        padding: EdgeInsets.only(left: 16, right: 8),
+        child: Icon(Icons.email, color: Colors.grey),
+      ),
+      prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+    ),
+    validator: (value) {
+      if (value == null || value.trim().isEmpty) {
+        return 'ای میل درج کریں';
+      }
+      if (value.contains(' ')) {
+        return 'ای میل میں خالی جگہ نہیں ہونی چاہیے';
+      }
+      if (!value.contains('@')) {
+        return '@ شامل کریں';
+      }
+      if (!value.contains('.')) {
+        return 'غلط ای میل ایڈریس';
+      }
+      return null;
+    },
+  ),
+),
                           ],
                         ),
                       ),
