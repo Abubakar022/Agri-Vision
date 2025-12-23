@@ -1,6 +1,4 @@
 import 'dart:math';
-
-import 'package:agri_vision/src/presentation/AppConstant/Colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
@@ -38,7 +36,7 @@ class _ChatbotState extends State<Chatbot> {
   bool _isLoading = false;
   bool _initialMessageSent = false;
   bool _ttsAvailable = false;
-  String _currentTTSLocale = "en-US";
+  String _currentTTSLocale = "ur-PK";
   bool _showTTSIndicator = false;
   bool _isSpeaking = false;
   Map<String, String> _availableLocales = {};
@@ -46,7 +44,7 @@ class _ChatbotState extends State<Chatbot> {
   double _speechPitch = 1.15;
   double _speechVolume = 0.92;
   bool _ttsSettingsVisible = false;
-  String _ttsEngineStatus = 'جائزہ لیا جا رہا ہے';
+  String _ttsEngineStatus = 'اردو آواز چیک کی جا رہی ہے';
 
   // Enhanced chatbot responses with natural Urdu
   final Map<String, String> _botResponses = {
@@ -54,28 +52,13 @@ class _ChatbotState extends State<Chatbot> {
     'ہیلو': 'ہیلو جی! خوش آمدید۔ گندم کے کھیت کیسی حالت میں ہے؟ براہ کرم علامات بیان کریں۔',
     'پیلے دھبے': 'پیلے دھبے ... رسٹ بیماری کی علامت ہو سکتے ہیں۔ سفارش ... زینب فنگسائڈ کا سپرے کریں ... اور پانی کا متوازن استعمال کریں۔ تین دن بعد دوبارہ چیک کریں۔',
     'سڑنا': 'سڑنا ... یہ پاؤڈری ملڈیو ہو سکتا ہے۔ کھیت میں ہوا کی گردش بڑھائیں۔ مناسب فنگسائڈ کا استعمال کریں۔ پانی کا چھڑکاؤ کم کریں۔',
-    'زنگ': 'زنگ ... یہ پتوں کا رسٹ ہے۔ مزاحمتی اقسام استعمال کریں۔ بروقت سپرے کریں۔ متاثرہ پودوں کو الگ کریں۔',
-    'گندم': 'گندم ... اس کی بیماریوں میں رسٹ، سنٹ، پاؤڈری ملڈیو شامل ہیں۔ براہ کرم مخصوص علامات بتائیں۔ جیسے پیلے دھبے یا سڑنا۔',
-    'ایفڈ': 'ایفڈ ... چھوٹے کیڑے ہیں۔ پودوں کا رس چوستے ہیں۔ مناسب کیڑے مار ادویات کا استعمال کریں۔ قدرتی دشمن بھی متعارف کروائیں۔',
-    'کالی زنگ': 'کالی زنگ ... ایک سنگین بیماری ہے۔ فوری علاج ضروری ہے۔ مزاحمتی اقسام کاشت کریں۔ فنگسائڈ کا سپرے کریں۔',
-    'بلاسٹ': 'بلاسٹ ... تیز رفتار پھیلنے والی بیماری۔ متاثرہ پودوں کو فوری الگ کریں۔ اینٹی بائیوٹک سپرے استعمال کریں۔',
-    'بھوری زنگ': 'بھوری زنگ ... قوت مدافعت رکھنے والی اقسام استعمال کریں۔ پانی کا مناسب انتظام کریں۔ کھاد کا متوازن استعمال۔',
-    'فیوزیریم': 'فیوزیریم ... ہیڈ بلائٹ کے لیے صحت مند بیج استعمال کریں۔ کھیت صاف رکھیں۔ متوازن کھاد دیں۔',
-    'پتوں کا بلائٹ': 'پتوں کا بلائٹ ... باقاعدہ سپرے پروگرام اپنائیں۔ متاثرہ پتے جلائیں۔ کھیت کی صفائی ضروری ہے۔',
-    'پھپھوندی': 'پھپھوندی ... ہوا کی گردش بڑھائیں۔ نمی کم کریں۔ فنگسائڈ کا استعمال کریں۔',
-    'مائٹ': 'مائٹ ... مخصوص ایکارائسائڈز استعمال کریں۔ قدرتی تیل کے سپرے بھی مفید ہیں۔',
-    'سیپٹوریا': 'سیپٹوریا ... متوازن کھاد کا استعمال کریں۔ متاثرہ پودوں کو الگ کریں۔ مناسب سپرے کریں۔',
-    'کھنڈ': 'کھنڈ ... صاف ستھری کاشتکاری اپنائیں۔ بیماری کے بیج استعمال نہ کریں۔',
-    'تنا مکھی': 'تنا مکھی ... بروقت اقدامات کریں۔ کیڑے مار ادویات کا استعمال کریں۔',
-    'ٹین اسپاٹ': 'ٹین اسپاٹ ... مناسب پانی کا انتظام کریں۔ فنگسائڈ سپرے کریں۔',
-    'پیلی زنگ': 'پیلی زنگ ... مزاحمتی اقسام استعمال کریں۔ متاثرہ حصے کاٹ دیں۔',
     'default': 'میں آپ کی بات سمجھ گیا ہوں۔ براہ کرم مزید تفصیل سے بیان کریں۔ مثلاً ... پتے کیسی ہیں؟ ... کتنے دن ہوئے؟ ... کون سا حصہ متاثر ہے؟'
   };
 
   @override
   void initState() {
     super.initState();
-    _initEnhancedTTS();
+    _initTTS();
     _initSTT();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollToBottom();
@@ -96,145 +79,82 @@ class _ChatbotState extends State<Chatbot> {
     _sendMessage();
   }
 
-  Future<void> _initEnhancedTTS() async {
+  Future<void> _initTTS() async {
     try {
-      print("Initializing Enhanced TTS...");
+      print("TTS شروع ہو رہا ہے...");
       
-      // Initialize TTS with better settings
+      // TTS سیٹنگز
       await _flutterTts.setSharedInstance(true);
       await _flutterTts.awaitSpeakCompletion(true);
-      await _flutterTts.setQueueMode(1); // Sequential queue
       
-      // Get all available locales
+      // دستیاب زبانوں کی فہرست
       final languages = await _flutterTts.getLanguages;
-      print("Available languages: $languages");
+      print("دستیاب زبانیں: $languages");
       
-      // Store available locales
       _availableLocales.clear();
       for (var locale in languages) {
         _availableLocales[locale] = locale;
       }
       
-      // Try to find best Urdu locale with priority
-      final preferredUrduLocales = [
-        "ur_PK",
-        "urd_PK", 
-        "ur_IN",
-        "ur",
-        "urd_Arab",
-        "ur-PK",
-        "urd-PK",
-        "ur_PK.UTF-8",
-        "urd_PK.UTF-8"
-      ];
-      
+      // اردو زبان کی تلاش
       String? selectedLocale;
-      for (String locale in preferredUrduLocales) {
-        if (_availableLocales.containsKey(locale)) {
-          selectedLocale = locale;
-          print("✅ Found preferred Urdu locale: $selectedLocale");
-          break;
-        }
-      }
-      
-      // If Urdu not found, try Arabic as alternative
-      if (selectedLocale == null) {
-        print("Urdu locale not found, trying Arabic...");
-        final arabicLocales = ["ar_SA", "ar_AE", "ar", "ar_EG"];
-        for (String locale in arabicLocales) {
-          if (_availableLocales.containsKey(locale)) {
-            selectedLocale = locale;
-            print("✅ Using Arabic as alternative: $selectedLocale");
-            break;
-          }
-        }
-      }
-      
-      // If still not found, use English but show indicator
-      if (selectedLocale == null) {
-        print("Arabic not found, trying English...");
-        if (_availableLocales.containsKey("en_US")) {
-          selectedLocale = "en_US";
-        } else if (_availableLocales.containsKey("en_GB")) {
-          selectedLocale = "en_GB";
-        } else if (_availableLocales.containsKey("en")) {
-          selectedLocale = "en";
-        } else if (_availableLocales.isNotEmpty) {
-          selectedLocale = _availableLocales.keys.first;
-        }
-        
-        if (selectedLocale != null) {
-          setState(() {
-            _showTTSIndicator = true;
-            _ttsEngineStatus = 'انگریزی آواز - اردو دستیاب نہیں';
-          });
-        }
-      } else {
-        setState(() {
-          _ttsEngineStatus = selectedLocale!.contains("ur") 
-              ? 'اردو آواز فعال' 
-              : selectedLocale.contains("ar")
-                  ? 'عربی آواز - قریب ترین'
-                  : 'انگریزی آواز';
-        });
+      if (_availableLocales.containsKey("ur-PK")) {
+        selectedLocale = "ur-PK";
+      } else if (_availableLocales.containsKey("ur")) {
+        selectedLocale = "ur";
+      } else if (_availableLocales.containsKey("ur_IN")) {
+        selectedLocale = "ur_IN";
+      } else if (_availableLocales.containsKey("ar_SA")) {
+        selectedLocale = "ar_SA"; // عربی بطور متبادل
+      } else if (_availableLocales.containsKey("en_US")) {
+        selectedLocale = "en_US"; // انگریزی بطور متبادل
       }
       
       if (selectedLocale != null) {
         await _flutterTts.setLanguage(selectedLocale);
         
-        // Enhanced settings for natural voice
+        // اردو/عربی کے لیے سیٹنگز
         if (selectedLocale.contains("ur") || selectedLocale.contains("ar")) {
-          // Urdu/Arabic کے لئے optimized natural settings
-          await _flutterTts.setSpeechRate(_speechRate);  // Natural speed
-          await _flutterTts.setPitch(_speechPitch);      // Natural pitch variation
-          await _flutterTts.setVolume(_speechVolume);    // Softer volume
-          await _flutterTts.setSilence(300);             // Pause between sentences
+          await _flutterTts.setSpeechRate(_speechRate);
+          await _flutterTts.setPitch(_speechPitch);
+          await _flutterTts.setVolume(_speechVolume);
         } else {
-          // English کے لئے optimized settings
+          // انگریزی کے لیے سیٹنگز
           await _flutterTts.setSpeechRate(0.48);
           await _flutterTts.setPitch(1.2);
           await _flutterTts.setVolume(0.95);
-          await _flutterTts.setSilence(250);
         }
-        
-        // Test voice quality
-        Future.delayed(const Duration(seconds: 1), () {
-          _testVoiceQuality();
-        });
         
         setState(() {
           _ttsAvailable = true;
           _currentTTSLocale = selectedLocale!;
+          
+          // انڈیکیٹر صرف اس صورت میں دکھائیں جب اردو دستیاب نہ ہو
+          _showTTSIndicator = !selectedLocale.contains("ur");
+          
+          if (selectedLocale.contains("ur")) {
+            _ttsEngineStatus = 'اردو آواز فعال ہے';
+          } else if (selectedLocale.contains("ar")) {
+            _ttsEngineStatus = 'عربی آواز استعمال ہو رہی ہے';
+          } else {
+            _ttsEngineStatus = 'انگریزی آواز استعمال ہو رہی ہے';
+          }
         });
         
-        print("TTS initialized with: $selectedLocale");
-        
+        print("TTS تیار ہوگیا: $selectedLocale");
       } else {
-        print("No suitable locale found");
+        print("کوئی مناسب زبان نہیں ملی");
         setState(() {
           _ttsAvailable = false;
           _ttsEngineStatus = 'آواز سروس دستیاب نہیں';
         });
       }
-      
     } catch (e) {
-      print("Enhanced TTS Initialization Error: $e");
+      print("TTS خرابی: $e");
       setState(() {
         _ttsAvailable = false;
         _ttsEngineStatus = 'خرابی: $e';
       });
-    }
-  }
-
-  Future<void> _testVoiceQuality() async {
-    if (!_ttsAvailable) return;
-    
-    try {
-      print("Testing voice quality...");
-      await _flutterTts.speak("آواز کی جانچ");
-      await Future.delayed(const Duration(seconds: 2));
-    } catch (e) {
-      print("Voice test failed: $e");
     }
   }
 
@@ -247,13 +167,13 @@ class _ChatbotState extends State<Chatbot> {
           }
         },
         onError: (error) {
-          print("STT Error: $error");
+          print("STT خرابی: $error");
           setState(() => _isListening = false);
         },
       );
-      print("STT Available: $_sttAvailable");
+      print("STT دستیاب: $_sttAvailable");
     } catch (e) {
-      print("STT Initialization Error: $e");
+      print("STT شروع کرنے میں خرابی: $e");
     }
   }
 
@@ -262,43 +182,12 @@ class _ChatbotState extends State<Chatbot> {
     
     final lowerMessage = userMessage.toLowerCase();
     
-    // Enhanced response matching with natural pauses
     if (lowerMessage.contains('پیلے') || lowerMessage.contains('دھبے') || lowerMessage.contains('زرد')) {
       return _botResponses['پیلے دھبے']!;
-    } else if (lowerMessage.contains('سڑنا') || lowerMessage.contains('ملڈیو') || lowerMessage.contains('پھپھوند')) {
+    } else if (lowerMessage.contains('سڑنا') || lowerMessage.contains('ملڈیو')) {
       return _botResponses['سڑنا']!;
-    } else if (lowerMessage.contains('زنگ') || lowerMessage.contains('رسٹ') || lowerMessage.contains('rusted')) {
-      return _botResponses['زنگ']!;
-    } else if (lowerMessage.contains('سلام') || lowerMessage.contains('ہیلو') || lowerMessage.contains('السلام')) {
+    } else if (lowerMessage.contains('سلام') || lowerMessage.contains('ہیلو')) {
       return _botResponses['سلام']!;
-    } else if (lowerMessage.contains('گندم') || lowerMessage.contains('wheat')) {
-      return _botResponses['گندم']!;
-    } else if (lowerMessage.contains('ایفڈ') || lowerMessage.contains('aphid') || lowerMessage.contains('کیڑے')) {
-      return _botResponses['ایفڈ']!;
-    } else if (lowerMessage.contains('کالی') && lowerMessage.contains('زنگ')) {
-      return _botResponses['کالی زنگ']!;
-    } else if (lowerMessage.contains('بلاسٹ') || lowerMessage.contains('blast')) {
-      return _botResponses['بلاسٹ']!;
-    } else if (lowerMessage.contains('بھوری') && lowerMessage.contains('زنگ')) {
-      return _botResponses['بھوری زنگ']!;
-    } else if (lowerMessage.contains('فیوزیریم') || lowerMessage.contains('fusarium')) {
-      return _botResponses['فیوزیریم']!;
-    } else if ((lowerMessage.contains('پتوں') || lowerMessage.contains('پتے')) && lowerMessage.contains('بلائٹ')) {
-      return _botResponses['پتوں کا بلائٹ']!;
-    } else if (lowerMessage.contains('پھپھوندی') || lowerMessage.contains('فنگس') || lowerMessage.contains('fungus')) {
-      return _botResponses['پھپھوندی']!;
-    } else if (lowerMessage.contains('مائٹ') || lowerMessage.contains('mite')) {
-      return _botResponses['مائٹ']!;
-    } else if (lowerMessage.contains('سیپٹوریا') || lowerMessage.contains('septoria')) {
-      return _botResponses['سیپٹوریا']!;
-    } else if (lowerMessage.contains('کھنڈ') || lowerMessage.contains('سماٹ') || lowerMessage.contains('smut')) {
-      return _botResponses['کھنڈ']!;
-    } else if (lowerMessage.contains('تنا') && lowerMessage.contains('مکھی')) {
-      return _botResponses['تنا مکھی']!;
-    } else if (lowerMessage.contains('ٹین') && lowerMessage.contains('اسپاٹ')) {
-      return _botResponses['ٹین اسپاٹ']!;
-    } else if (lowerMessage.contains('پیلی') && lowerMessage.contains('زنگ')) {
-      return _botResponses['پیلی زنگ']!;
     } else {
       return _botResponses['default']!;
     }
@@ -314,340 +203,46 @@ class _ChatbotState extends State<Chatbot> {
         _isSpeaking = true;
       });
 
-      // Stop any ongoing speech
       await _flutterTts.stop();
       await Future.delayed(const Duration(milliseconds: 100));
 
-      // Show indicator if using non-Urdu voice
-      bool isUsingUrdu = _currentTTSLocale.contains("ur");
-      bool isUsingArabic = _currentTTSLocale.contains("ar");
+      // متن کو قدرتی انداز میں بولنے کے لیے تیار کریں
+      String processedText = _processTextForNaturalTTS(text);
       
-      if (!isUsingUrdu && _showTTSIndicator) {
-        _showTTSSnackbar(isUsingArabic);
-      }
-
-      // Process text for natural TTS output
-      String processedText = _processTextForNaturalTTS(text, isUsingUrdu);
+      print("بول رہا ہوں: ${processedText.substring(0, min(50, processedText.length))}...");
       
-      print("Speaking: ${processedText.substring(0, min(50, processedText.length))}...");
-      
-      // Speak the text
       await _flutterTts.speak(processedText);
       
-      // Listen for completion
       _flutterTts.setCompletionHandler(() {
         setState(() {
           _isSpeaking = false;
         });
       });
 
-      // Set error handler
       _flutterTts.setErrorHandler((error) {
-        print("TTS Error during speech: $error");
+        print("بولنے میں خرابی: $error");
         setState(() {
           _isSpeaking = false;
         });
-        
-        if (error.contains("not available") || error.contains("language")) {
-          _showUrduInstallGuide();
-        }
       });
 
     } catch (e) {
-      print("TTS Error: $e");
+      print("TTS خرابی: $e");
       setState(() {
         _isSpeaking = false;
       });
-      
-      if (e.toString().contains("not available") || e.toString().contains("language")) {
-        _showUrduInstallGuide();
-      }
     }
   }
 
-  String _processTextForNaturalTTS(String text, bool isUrdu) {
-    if (isUrdu || _currentTTSLocale.contains("ar")) {
-      // For Urdu/Arabic - add natural pauses and emphasis
-      return text
-          // Sentence endings with longer pauses
-          .replaceAll('۔', '۔ ... ... ')
-          .replaceAll('!', '! ... ... ')
-          .replaceAll('؟', '؟ ... ... ')
-          
-          // Commas with shorter pauses
-          .replaceAll('،', '، ... ')
-          .replaceAll(':', ': ... ')
-          
-          // Important terms with emphasis
-          .replaceAll('رسٹ', ' ... رسٹ ... ')
-          .replaceAll('ملڈیو', ' ... ملڈیو ... ')
-          .replaceAll('بلائٹ', ' ... بلائٹ ... ')
-          .replaceAll('ایفڈ', ' ... ایفڈ ... ')
-          .replaceAll('فنگسائڈ', ' ... فنگسائڈ ... ')
-          
-          // Recommendations with pauses
-          .replaceAll('سفارش', ' ... سفارش ... ')
-          .replaceAll('براہ کرم', ' ... براہ کرم ... ')
-          .replaceAll('ضروری ہے', ' ... ضروری ہے ... ')
-          
-          // Numbers with spacing
-          .replaceAllMapped(RegExp(r'\d+'), (match) {
-            return ' ${match.group(0)} ';
-          })
-          
-          // Remove extra spaces
-          .replaceAll(RegExp(r'\s+'), ' ')
-          .trim();
-    } else {
-      // For English - improve pronunciation of Urdu terms
-      return text
-          .replaceAll('زنگ', 'rust')
-          .replaceAll('بلائٹ', 'blight')
-          .replaceAll('ملڈیو', 'mildew')
-          .replaceAll('ایفڈ', 'aphid')
-          .replaceAll('فنگسائڈ', 'fungicide')
-          .replaceAll('رسٹ', 'rust')
-          .replaceAll('گندم', 'wheat');
-    }
-  }
-
-  void _showTTSSnackbar(bool isArabic) {
-    String message = isArabic 
-        ? 'اردو آواز دستیاب نہیں - عربی میں بول رہا ہوں'
-        : 'اردو آواز دستیاب نہیں - انگریزی میں بول رہا ہوں';
-    
-    Get.showSnackbar(
-      GetSnackBar(
-        messageText: Directionality(
-          textDirection: TextDirection.rtl,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              Icon(Icons.language, color: isArabic ? Colors.blue : Colors.orange, size: 20),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  message,
-                  textAlign: TextAlign.right,
-                  style: GoogleFonts.vazirmatn(
-                    color: Colors.white,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        backgroundColor: isArabic ? Colors.blue : Colors.orange,
-        duration: const Duration(seconds: 4),
-        snackPosition: SnackPosition.BOTTOM,
-        borderRadius: 12,
-        margin: const EdgeInsets.all(16),
-        animationDuration: const Duration(milliseconds: 300),
-        isDismissible: true,
-        dismissDirection: DismissDirection.horizontal,
-        mainButton: TextButton(
-          onPressed: _showUrduInstallGuide,
-          child: Text(
-            'انسٹال کریں',
-            style: GoogleFonts.vazirmatn(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showUrduInstallGuide() {
-    Get.dialog(
-      Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          title: Text(
-            'بہتر اردو آواز کے لیے',
-            style: GoogleFonts.vazirmatn(
-              fontWeight: FontWeight.bold,
-              color: const Color(0xFF02A96C),
-            ),
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'قدرتی اردو آواز کے لیے براہ کرم ان میں سے کوئی ایک TTS انجن انسٹال کریں:',
-                  style: GoogleFonts.vazirmatn(fontSize: 14),
-                ),
-                const SizedBox(height: 16),
-                
-                _buildTTSOption(
-                  'Google Text-to-Speech',
-                  'سب سے بہتر معیار',
-                  'https://play.google.com/store/apps/details?id=com.google.android.tts',
-                  Icons.audiotrack,
-                  Colors.green,
-                ),
-                
-                _buildTTSOption(
-                  'Microsoft TTS',
-                  'بہتر اردو سپورٹ',
-                  'https://play.google.com/store/apps/details?id=com.microsoft.tts',
-                  Icons.record_voice_over,
-                  Colors.blue,
-                ),
-                
-                _buildTTSOption(
-                  'Samsung TTS',
-                  'سیمسنگ فونز کے لیے',
-                  'https://play.google.com/store/apps/details?id=com.samsung.SMT',
-                  Icons.phone_android,
-                  Colors.purple,
-                ),
-                
-                const SizedBox(height: 16),
-                Divider(color: Colors.grey[300]),
-                const SizedBox(height: 8),
-                
-                Text(
-                  'انسٹال کرنے کے بعد:',
-                  style: GoogleFonts.vazirmatn(
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF02A96C),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                
-                _buildInstallStep('1', 'Settings > Language & Input کھولیں'),
-                _buildInstallStep('2', 'Text-to-Speech Output پر جائیں'),
-                _buildInstallStep('3', 'انجن منتخب کریں (Google TTS)'),
-                _buildInstallStep('4', 'اردو زبان ڈاؤن لوڈ کریں'),
-                _buildInstallStep('5', 'ایپ دوبارہ شروع کریں'),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Get.back(),
-              child: Text(
-                'بند کریں',
-                style: GoogleFonts.vazirmatn(
-                  color: Colors.grey[600],
-                ),
-              ),
-            ),
-            TextButton(
-              onPressed: () {
-                Get.back();
-                _openAppSettings();
-              },
-              child: Text(
-                'سیٹنگز کھولیں',
-                style: GoogleFonts.vazirmatn(
-                  color: const Color(0xFF02A96C),
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            TextButton(
-              onPressed: () {
-                Get.back();
-                _testAllVoices();
-              },
-              child: Text(
-                'آواز ٹیسٹ کریں',
-                style: GoogleFonts.vazirmatn(
-                  color: Colors.blue,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTTSOption(String title, String subtitle, String playStoreUrl, IconData icon, Color color) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 4),
-      child: ListTile(
-        leading: Icon(icon, color: color),
-        title: Text(title, style: GoogleFonts.vazirmatn(fontWeight: FontWeight.bold)),
-        subtitle: Text(subtitle, style: GoogleFonts.vazirmatn(fontSize: 12)),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-        onTap: () => _launchPlayStore(playStoreUrl),
-      ),
-    );
-  }
-
-  Future<void> _launchPlayStore(String url) async {
-    try {
-      if (await canLaunch(url)) {
-        await launch(url);
-      }
-    } catch (e) {
-      print("Failed to launch Play Store: $e");
-    }
-  }
-
-  Future<void> _openAppSettings() async {
-    try {
-      await openAppSettings();
-    } catch (e) {
-      print("Failed to open app settings: $e");
-    }
-  }
-
-  Future<void> _testAllVoices() async {
-    if (!_ttsAvailable) return;
-    
-    final testPhrases = [
-      "آواز کی جانچ ... ایک، دو، تین۔",
-      "گندم کی بیماریاں ... رسٹ اور ملڈیو۔",
-      "براہ کرم تفصیل بتائیں۔"
-    ];
-    
-    for (var phrase in testPhrases) {
-      await _speak(phrase);
-      await Future.delayed(const Duration(seconds: 3));
-    }
-  }
-
-  Widget _buildInstallStep(String number, String text) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 24,
-            height: 24,
-            decoration: BoxDecoration(
-              color: const Color(0xFF02A96C),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                number,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              text,
-              style: GoogleFonts.vazirmatn(fontSize: 13),
-            ),
-          ),
-        ],
-      ),
-    );
+  String _processTextForNaturalTTS(String text) {
+    return text
+        .replaceAll('۔', '۔ ... ')
+        .replaceAll('!', '! ... ')
+        .replaceAll('؟', '؟ ... ')
+        .replaceAll('،', '، ... ')
+        .replaceAll(':', ': ... ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
   }
 
   Future<bool> _checkPermissions() async {
@@ -702,7 +297,7 @@ class _ChatbotState extends State<Chatbot> {
         partialResults: true,
       );
     } catch (e) {
-      print("Listening error: $e");
+      print("سننے میں خرابی: $e");
       setState(() => _isListening = false);
     }
   }
@@ -750,14 +345,13 @@ class _ChatbotState extends State<Chatbot> {
       
       _scrollToBottom();
       
-      // Auto-speak bot response with delay
       if (_ttsAvailable) {
         Future.delayed(const Duration(milliseconds: 800), () {
           _speak(botResponse);
         });
       }
     } catch (e) {
-      print("Error getting bot response: $e");
+      print("جواب لینے میں خرابی: $e");
       setState(() => _isLoading = false);
     }
   }
@@ -774,173 +368,203 @@ class _ChatbotState extends State<Chatbot> {
     });
   }
 
-  void _showTTSSettings() {
+  void _showTTSInstallGuide() {
     Get.dialog(
       Directionality(
         textDirection: TextDirection.rtl,
-        child: StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              title: Text(
-                'آواز کی سیٹنگز',
+        child: AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.volume_up, color: const Color(0xFF02A96C)),
+              SizedBox(width: 10),
+              Text(
+                'اردو آواز انسٹال کریں',
                 style: GoogleFonts.vazirmatn(
                   fontWeight: FontWeight.bold,
                   color: const Color(0xFF02A96C),
                 ),
               ),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Voice Status
-                    Card(
-                      color: _currentTTSLocale.contains("ur") 
-                          ? Colors.green[50]
-                          : _currentTTSLocale.contains("ar")
-                              ? Colors.blue[50]
-                              : Colors.orange[50],
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Column(
-                          children: [
-                            Text(
-                              'موجودہ آواز:',
-                              style: GoogleFonts.vazirmatn(fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              _ttsEngineStatus,
-                              style: GoogleFonts.vazirmatn(
-                                color: _currentTTSLocale.contains("ur") 
-                                    ? Colors.green
-                                    : _currentTTSLocale.contains("ar")
-                                        ? Colors.blue
-                                        : Colors.orange,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 20),
-                    
-                    // Speech Rate
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'رفتار',
-                              style: GoogleFonts.vazirmatn(fontWeight: FontWeight.bold),
-                            ),
-                            Text(
-                              '${_speechRate.toStringAsFixed(2)}',
-                              style: GoogleFonts.vazirmatn(color: Colors.grey[700]),
-                            ),
-                          ],
-                        ),
-                        Slider(
-                          value: _speechRate,
-                          min: 0.3,
-                          max: 0.8,
-                          divisions: 10,
-                          onChanged: (value) async {
-                            setState(() => _speechRate = value);
-                            await _flutterTts.setSpeechRate(value);
-                          },
-                          activeColor: const Color(0xFF02A96C),
-                        ),
-                      ],
-                    ),
-                    
-                    const SizedBox(height: 20),
-                    
-                    // Pitch
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'آواز کی اونچائی',
-                              style: GoogleFonts.vazirmatn(fontWeight: FontWeight.bold),
-                            ),
-                            Text(
-                              '${_speechPitch.toStringAsFixed(2)}',
-                              style: GoogleFonts.vazirmatn(color: Colors.grey[700]),
-                            ),
-                          ],
-                        ),
-                        Slider(
-                          value: _speechPitch,
-                          min: 0.5,
-                          max: 2.0,
-                          divisions: 15,
-                          onChanged: (value) async {
-                            setState(() => _speechPitch = value);
-                            await _flutterTts.setPitch(value);
-                          },
-                          activeColor: const Color(0xFF02A96C),
-                        ),
-                      ],
-                    ),
-                    
-                    const SizedBox(height: 20),
-                    
-                    // Test Button
-                    ElevatedButton.icon(
-                      onPressed: () => _speak("یہ آواز کی جانچ ہے۔ گندم کی بیماریوں کی معلومات۔"),
-                      icon: const Icon(Icons.volume_up),
-                      label: Text(
-                        'آواز ٹیسٹ کریں',
-                        style: GoogleFonts.vazirmatn(),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF02A96C),
-                        foregroundColor: Colors.white,
-                        minimumSize: const Size(double.infinity, 48),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ],
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'اردو میں بولنے کے لیے آپ کو TTS (Text-to-Speech) انجن انسٹال کرنا ہوگا۔',
+                  style: GoogleFonts.vazirmatn(fontSize: 14),
                 ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Get.back(),
-                  child: Text(
-                    'بند کریں',
-                    style: GoogleFonts.vazirmatn(
-                      color: Colors.grey[600],
+                
+                SizedBox(height: 20),
+                
+                Card(
+                  elevation: 2,
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      children: [
+                        ListTile(
+                          leading: Icon(Icons.download, color: Colors.green),
+                          title: Text('سب سے آسان طریقہ', 
+                            style: GoogleFonts.vazirmatn(fontWeight: FontWeight.bold)),
+                          subtitle: Text('Google TTS انسٹال کریں', 
+                            style: GoogleFonts.vazirmatn(fontSize: 12)),
+                        ),
+                        
+                        SizedBox(height: 10),
+                        
+                        ElevatedButton(
+                          onPressed: () => _launchPlayStore("https://play.google.com/store/apps/details?id=com.google.android.tts"),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            foregroundColor: Colors.white,
+                            minimumSize: Size(double.infinity, 45),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.download),
+                              SizedBox(width: 8),
+                              Text('Google TTS ڈاؤن لوڈ کریں', 
+                                style: GoogleFonts.vazirmatn()),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-                TextButton(
-                  onPressed: () {
-                    Get.back();
-                    _showUrduInstallGuide();
-                  },
-                  child: Text(
-                    'بہتر آواز انسٹال کریں',
-                    style: GoogleFonts.vazirmatn(
-                      color: const Color(0xFF02A96C),
-                      fontWeight: FontWeight.bold,
+                
+                SizedBox(height: 20),
+                
+                Text(
+                  'انسٹال کرنے کے بعد:',
+                  style: GoogleFonts.vazirmatn(
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF02A96C),
+                  ),
+                ),
+                
+                SizedBox(height: 10),
+                
+                _buildInstallStep('1', 'Google TTS ایپ کھولیں'),
+                _buildInstallStep('2', '"زبان ڈاؤن لوڈ کریں" پر کلک کریں'),
+                _buildInstallStep('3', '"اردو (پاکستان)" تلاش کریں'),
+                _buildInstallStep('4', 'اردو زبان ڈاؤن لوڈ کریں'),
+                _buildInstallStep('5', 'آپ کی ایپ دوبارہ شروع کریں'),
+                
+                SizedBox(height: 20),
+                
+                Text(
+                  'اگر مسئلہ حل نہ ہو تو:',
+                  style: GoogleFonts.vazirmatn(
+                    color: Colors.grey[700],
+                    fontSize: 12,
+                  ),
+                ),
+                
+                SizedBox(height: 10),
+                
+                OutlinedButton.icon(
+                  onPressed: () => _openAppSettings(),
+                  icon: Icon(Icons.settings),
+                  label: Text('سیٹنگز کھولیں', style: GoogleFonts.vazirmatn()),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: Size(double.infinity, 45),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
                     ),
                   ),
                 ),
               ],
-            );
-          },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(),
+              child: Text('بند کریں', 
+                style: GoogleFonts.vazirmatn(color: Colors.grey[600])),
+            ),
+            TextButton(
+              onPressed: () {
+                Get.back();
+                _testTTS();
+              },
+              child: Text('ٹیسٹ کریں', 
+                style: GoogleFonts.vazirmatn(
+                  color: const Color(0xFF02A96C),
+                  fontWeight: FontWeight.bold,
+                )),
+            ),
+          ],
         ),
       ),
     );
+  }
+
+  Widget _buildInstallStep(String number, String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 24,
+            height: 24,
+            decoration: BoxDecoration(
+              color: const Color(0xFF02A96C),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(
+                number,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+          SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              text,
+              style: GoogleFonts.vazirmatn(fontSize: 13),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _launchPlayStore(String url) async {
+    try {
+      if (await canLaunch(url)) {
+        await launch(url);
+      }
+    } catch (e) {
+      print("Play Store کھولنے میں خرابی: $e");
+    }
+  }
+
+  Future<void> _openAppSettings() async {
+    try {
+      await openAppSettings();
+    } catch (e) {
+      print("سیٹنگز کھولنے میں خرابی: $e");
+    }
+  }
+
+  Future<void> _testTTS() async {
+    if (!_ttsAvailable) return;
+    
+    final testPhrase = "آواز کی جانچ۔ اردو آواز کام کر رہی ہے۔";
+    await _speak(testPhrase);
   }
 
   @override
@@ -954,102 +578,62 @@ class _ChatbotState extends State<Chatbot> {
         backgroundColor: const Color(0xFFFDF8E3),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Color(0xFF02A96C),
-          ),
+          icon: Icon(Icons.arrow_back, color: const Color(0xFF02A96C)),
           onPressed: () => Get.back(),
         ),
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'گندم کی بیماریوں کی معلومات',
-              style: GoogleFonts.vazirmatn(
-                fontWeight: FontWeight.bold,
-                color: const Color(0xFF02A96C),
-                fontSize: 20,
-              ),
-            ),
-            if (_showTTSIndicator) ...[
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: isArabicTTS ? Colors.blue : Colors.orange,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  isArabicTTS ? 'AR' : 'EN',
-                  style: GoogleFonts.vazirmatn(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ],
+        title: Text(
+          'گندم کی بیماریاں',
+          style: GoogleFonts.vazirmatn(
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFF02A96C),
+            fontSize: 20,
+          ),
         ),
         centerTitle: true,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.info_outline, color: Color(0xFF02A96C)),
-            onPressed: _showHelpDialog,
-          ),
-          IconButton(
-            icon: Icon(
-              Icons.volume_up,
-              color: _ttsAvailable 
-                  ? (isUrduTTS ? Colors.green : (isArabicTTS ? Colors.blue : Colors.orange))
-                  : Colors.grey,
+          if (_ttsAvailable && _showTTSIndicator)
+            IconButton(
+              icon: Icon(
+                Icons.volume_up,
+                color: isUrduTTS ? Colors.green : Colors.orange,
+              ),
+              onPressed: _showTTSInstallGuide,
+              tooltip: 'اردو آواز کی معلومات',
             ),
-            onPressed: _ttsAvailable ? _showTTSSettings : null,
+          IconButton(
+            icon: Icon(Icons.help_outline, color: const Color(0xFF02A96C)),
+            onPressed: _showHelpDialog,
           ),
         ],
       ),
       body: Column(
         children: [
-          // TTS Status Banner
+          // TTS Status Banner (Only show if Urdu voice not available)
           if (_showTTSIndicator)
-            GestureDetector(
-              onTap: _showUrduInstallGuide,
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: isArabicTTS
-                        ? [Colors.blue[50]!, Colors.lightBlue[50]!]
-                        : [Colors.orange[50]!, Colors.amber[50]!],
-                  ),
-                ),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.orange[50],
+              ),
+              child: GestureDetector(
+                onTap: _showTTSInstallGuide,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.info,
-                      color: isArabicTTS ? Colors.blue : Colors.orange,
-                      size: 18,
-                    ),
-                    const SizedBox(width: 8),
+                    Icon(Icons.info, color: Colors.orange, size: 18),
+                    SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         isArabicTTS
-                            ? 'عربی آواز استعمال ہو رہی ہے - اردو کے لیے TTS انسٹال کریں'
-                            : 'انگریزی آواز استعمال ہو رہی ہے - اردو کے لیے TTS انسٹال کریں',
+                            ? 'عربی آواز استعمال ہو رہی ہے - اردو آواز انسٹال کریں'
+                            : 'انگریزی آواز استعمال ہو رہی ہے - اردو آواز انسٹال کریں',
                         textAlign: TextAlign.center,
                         style: GoogleFonts.vazirmatn(
                           fontSize: 12,
-                          color: isArabicTTS ? Colors.blue[800] : Colors.orange[800],
-                          fontWeight: FontWeight.w500,
+                          color: Colors.orange[800],
                         ),
                       ),
-                    ),
-                    Icon(
-                      Icons.arrow_forward_ios,
-                      color: isArabicTTS ? Colors.blue : Colors.orange,
-                      size: 14,
                     ),
                   ],
                 ),
@@ -1059,33 +643,30 @@ class _ChatbotState extends State<Chatbot> {
           // Chat Messages
           Expanded(
             child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(15),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 5),
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 5,
+                    offset: Offset(0, 2),
                   ),
                 ],
               ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: ListView.builder(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.all(16),
-                  itemCount: _messages.length + (_isLoading ? 1 : 0),
-                  itemBuilder: (context, index) {
-                    if (_isLoading && index == _messages.length) {
-                      return _buildLoadingBubble();
-                    }
-                    
-                    final message = _messages[index];
-                    return _buildMessageBubble(message, isUrduTTS, isArabicTTS);
-                  },
-                ),
+              child: ListView.builder(
+                controller: _scrollController,
+                padding: const EdgeInsets.all(8),
+                itemCount: _messages.length + (_isLoading ? 1 : 0),
+                itemBuilder: (context, index) {
+                  if (_isLoading && index == _messages.length) {
+                    return _buildLoadingBubble();
+                  }
+                  
+                  final message = _messages[index];
+                  return _buildMessageBubble(message);
+                },
               ),
             ),
           ),
@@ -1097,56 +678,26 @@ class _ChatbotState extends State<Chatbot> {
     );
   }
 
-  Widget _buildMessageBubble(Message message, bool isUrduTTS, bool isArabicTTS) {
+  Widget _buildMessageBubble(Message message) {
     final isUser = message.sender == 'user';
-    bool isLastBotMessage = !isUser && _messages.isNotEmpty && _messages.last == message;
-
-    Color voiceIconColor = isUrduTTS
-        ? const Color(0xFF02A96C)
-        : isArabicTTS
-            ? Colors.blue
-            : Colors.orange;
 
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
+      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
       child: Row(
         mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.end,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!isUser) ...[
-            Stack(
-              children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF02A96C),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.agriculture, color: Colors.white, size: 20),
-                ),
-                if (_showTTSIndicator)
-                  Positioned(
-                    top: 0,
-                    right: 0,
-                    child: Container(
-                      width: 14,
-                      height: 14,
-                      decoration: BoxDecoration(
-                        color: isArabicTTS ? Colors.blue : Colors.orange,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 1.5),
-                      ),
-                      child: Icon(
-                        Icons.language,
-                        size: 8,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-              ],
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: const Color(0xFF02A96C),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.agriculture, color: Colors.white, size: 20),
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
           ],
           Flexible(
             child: Column(
@@ -1157,57 +708,42 @@ class _ChatbotState extends State<Chatbot> {
                   decoration: BoxDecoration(
                     color: isUser ? const Color(0xFF02A96C) : Colors.grey[50],
                     borderRadius: BorderRadius.only(
-                      topLeft: const Radius.circular(16),
-                      topRight: const Radius.circular(16),
-                      bottomLeft: Radius.circular(isUser ? 16 : 4),
-                      bottomRight: Radius.circular(isUser ? 4 : 16),
+                      topLeft: Radius.circular(isUser ? 12 : 0),
+                      topRight: Radius.circular(isUser ? 0 : 12),
+                      bottomLeft: Radius.circular(12),
+                      bottomRight: Radius.circular(12),
                     ),
-                    border: Border.all(
-                      color: isUser 
-                          ? const Color(0xFF02A96C).withOpacity(0.3)
-                          : const Color(0xFF02A96C).withOpacity(0.2),
-                      width: 1,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.end,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (!isUser && _ttsAvailable)
+                      if (_ttsAvailable && !isUser)
                         Container(
-                          margin: const EdgeInsets.only(left: 4),
+                          margin: EdgeInsets.only(right: 8),
                           child: IconButton(
                             icon: Icon(
-                              _isSpeaking && isLastBotMessage
-                                  ? Icons.stop_circle
-                                  : Icons.volume_up,
+                              _isSpeaking ? Icons.stop : Icons.volume_up,
                               size: 20,
-                              color: _isSpeaking && isLastBotMessage
-                                  ? Colors.red
-                                  : voiceIconColor,
+                              color: _currentTTSLocale.contains("ur") 
+                                  ? const Color(0xFF02A96C)
+                                  : Colors.orange,
                             ),
                             onPressed: () {
-                              if (_isSpeaking && isLastBotMessage) {
+                              if (_isSpeaking) {
                                 _flutterTts.stop();
                               } else {
                                 _speak(message.text);
                               }
                             },
                             padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(
-                              minWidth: 32,
-                              minHeight: 32,
+                            constraints: BoxConstraints(
+                              minWidth: 30,
+                              minHeight: 30,
                             ),
                           ),
                         ),
-                      Expanded(
+                      Flexible(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -1217,64 +753,19 @@ class _ChatbotState extends State<Chatbot> {
                               style: GoogleFonts.vazirmatn(
                                 fontSize: 14,
                                 color: isUser ? Colors.white : Colors.black87,
-                                height: 1.5,
                               ),
                             ),
-                            const SizedBox(height: 6),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  _formatTime(message.timestamp),
-                                  style: GoogleFonts.vazirmatn(
-                                    fontSize: 10,
-                                    color: isUser ? Colors.white70 : Colors.grey[600],
-                                  ),
-                                ),
-                                if (!isUser && _ttsAvailable && _showTTSIndicator)
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: isArabicTTS 
-                                          ? Colors.blue.withOpacity(0.1)
-                                          : Colors.orange.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Text(
-                                      isArabicTTS ? 'عربی' : 'انگریزی',
-                                      style: GoogleFonts.vazirmatn(
-                                        fontSize: 9,
-                                        color: isArabicTTS ? Colors.blue : Colors.orange,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                              ],
+                            SizedBox(height: 4),
+                            Text(
+                              _formatTime(message.timestamp),
+                              style: GoogleFonts.vazirmatn(
+                                fontSize: 10,
+                                color: isUser ? Colors.white70 : Colors.grey[600],
+                              ),
                             ),
                           ],
                         ),
                       ),
-                      if (isUser && _ttsAvailable)
-                        Container(
-                          margin: const EdgeInsets.only(right: 4),
-                          child: IconButton(
-                            icon: Icon(
-                              _isSpeaking && isLastBotMessage && isUser
-                                  ? Icons.stop_circle
-                                  : Icons.volume_up,
-                              size: 20,
-                              color: _isSpeaking && isLastBotMessage && isUser
-                                  ? Colors.red
-                                  : Colors.white70,
-                            ),
-                            onPressed: () => _speak(message.text),
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(
-                              minWidth: 32,
-                              minHeight: 32,
-                            ),
-                          ),
-                        ),
                     ],
                   ),
                 ),
@@ -1282,22 +773,15 @@ class _ChatbotState extends State<Chatbot> {
             ),
           ),
           if (isUser) ...[
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             Container(
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: const Color(0xFFFFA726),
+                color: Color(0xFFFFA726),
                 shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.orange.withOpacity(0.3),
-                    blurRadius: 6,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
               ),
-              child: const Icon(Icons.person, color: Colors.white, size: 20),
+              child: Icon(Icons.person, color: Colors.white, size: 20),
             ),
           ],
         ],
@@ -1307,7 +791,7 @@ class _ChatbotState extends State<Chatbot> {
 
   Widget _buildLoadingBubble() {
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
@@ -1318,51 +802,34 @@ class _ChatbotState extends State<Chatbot> {
               color: const Color(0xFF02A96C),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.agriculture, color: Colors.white, size: 20),
+            child: Icon(Icons.agriculture, color: Colors.white, size: 20),
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: Colors.grey[50],
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: const Color(0xFF02A96C).withOpacity(0.2),
-              ),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
               children: [
                 SizedBox(
-                  width: 22,
-                  height: 22,
+                  width: 20,
+                  height: 20,
                   child: CircularProgressIndicator(
-                    strokeWidth: 2.5,
-                    valueColor: const AlwaysStoppedAnimation<Color>(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(
                       Color(0xFF02A96C),
                     ),
                   ),
                 ),
-                const SizedBox(width: 14),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'جواب آ رہا ہے',
-                      style: GoogleFonts.vazirmatn(
-                        fontSize: 14,
-                        color: Colors.black87,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'گندم کی بیماریوں کی معلومات',
-                      style: GoogleFonts.vazirmatn(
-                        fontSize: 11,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ],
+                SizedBox(width: 12),
+                Text(
+                  'جواب آ رہا ہے...',
+                  style: GoogleFonts.vazirmatn(
+                    fontSize: 14,
+                    color: Colors.black87,
+                  ),
                 ),
               ],
             ),
@@ -1375,39 +842,29 @@ class _ChatbotState extends State<Chatbot> {
   Widget _buildInputArea() {
     return SafeArea(
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(8),
         color: const Color(0xFFFDF8E3),
         child: Row(
           children: [
             // Voice Button
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              width: _isListening ? 54 : 50,
-              height: _isListening ? 54 : 50,
+            Container(
+              width: 50,
+              height: 50,
               decoration: BoxDecoration(
-                color: _isListening 
-                    ? Colors.red 
-                    : const Color(0xFF02A96C),
+                color: _isListening ? Colors.red : const Color(0xFF02A96C),
                 shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: (_isListening ? Colors.red : const Color(0xFF02A96C)).withOpacity(0.4),
-                    blurRadius: _isListening ? 12 : 8,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
               ),
               child: IconButton(
                 icon: Icon(
                   _isListening ? Icons.mic_off : Icons.mic,
                   color: Colors.white,
-                  size: _isListening ? 26 : 24,
+                  size: 22,
                 ),
                 onPressed: _isListening ? _stopListening : _startListening,
               ),
             ),
             
-            const SizedBox(width: 12),
+            SizedBox(width: 8),
             
             // Text Input
             Expanded(
@@ -1415,13 +872,6 @@ class _ChatbotState extends State<Chatbot> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(25),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
                   border: Border.all(
                     color: const Color(0xFF02A96C).withOpacity(0.3),
                     width: 1,
@@ -1434,28 +884,17 @@ class _ChatbotState extends State<Chatbot> {
                         controller: _controller,
                         textDirection: TextDirection.rtl,
                         textAlign: TextAlign.right,
-                        maxLines: 3,
-                        minLines: 1,
                         decoration: InputDecoration(
-                          hintText: 'اپنا سوال یہاں لکھیں یا بول کر بتائیں',
+                          hintText: 'اپنا سوال یہاں لکھیں',
                           hintStyle: GoogleFonts.vazirmatn(
                             color: Colors.grey[600],
                             fontSize: 14,
                           ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 16,
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
                           ),
                           border: InputBorder.none,
-                          suffixIcon: _spokenText.isNotEmpty
-                              ? IconButton(
-                                  icon: const Icon(Icons.close, size: 20),
-                                  onPressed: () {
-                                    _controller.clear();
-                                    setState(() => _spokenText = "");
-                                  },
-                                )
-                              : null,
                         ),
                         onSubmitted: (value) => _sendMessage(),
                       ),
@@ -1463,20 +902,13 @@ class _ChatbotState extends State<Chatbot> {
                     
                     // Send Button
                     Container(
-                      margin: const EdgeInsets.only(right: 8),
+                      margin: EdgeInsets.only(right: 8),
                       decoration: BoxDecoration(
                         color: const Color(0xFF02A96C),
                         shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF02A96C).withOpacity(0.3),
-                            blurRadius: 6,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
                       ),
                       child: IconButton(
-                        icon: const Icon(Icons.send, color: Colors.white),
+                        icon: Icon(Icons.send, color: Colors.white),
                         onPressed: _sendMessage,
                       ),
                     ),
@@ -1498,10 +930,8 @@ class _ChatbotState extends State<Chatbot> {
       return 'ابھی';
     } else if (difference.inMinutes < 60) {
       return '${difference.inMinutes} منٹ پہلے';
-    } else if (difference.inHours < 24) {
-      return '${difference.inHours} گھنٹے پہلے';
     } else {
-      return '${difference.inDays} دن پہلے';
+      return '${difference.inHours} گھنٹے پہلے';
     }
   }
 
@@ -1511,58 +941,39 @@ class _ChatbotState extends State<Chatbot> {
         textDirection: TextDirection.rtl,
         child: AlertDialog(
           title: Text(
-            'چیٹ بوٹ کیسے استعمال کریں',
+            'مدد',
             style: GoogleFonts.vazirmatn(
               fontWeight: FontWeight.bold,
               color: const Color(0xFF02A96C),
             ),
           ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildHelpItem('🎤', 'وائس میں بات کریں - مائیک بٹن دبائیں'),
-                _buildHelpItem('⌨️', 'ٹائپ کر کے پیغام بھیجیں'),
-                if (_ttsAvailable) _buildHelpItem('🔊', 'جواب سننے کے لیے سپیکر آئیکن پر کلک کریں'),
-                _buildHelpItem('⚙️', 'آواز کی سیٹنگز کے لیے ٹاپ رائٹ میں گیئر آئیکن'),
-                _buildHelpItem('🌾', 'گندم کی بیماریوں کے بارے میں پوچھیں'),
-                _buildHelpItem('💡', 'مثالیں: "پیلے دھبے"، "سڑنا"، "زنگ"'),
-                if (_showTTSIndicator) 
-                  _buildHelpItem('🌐', 'اردو آواز کے لیے TTS انجن انسٹال کریں'),
-              ],
-            ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'ایپ استعمال کرنے کا طریقہ:',
+                style: GoogleFonts.vazirmatn(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              SizedBox(height: 10),
+              _buildHelpPoint('🎤', 'بول کر پیغام بھیجیں'),
+              _buildHelpPoint('✍️', 'لکھ کر پیغام بھیجیں'),
+              _buildHelpPoint('🔊', 'جواب سننے کے لیے سپیکر آئیکن دبائیں'),
+              SizedBox(height: 10),
+              if (_showTTSIndicator)
+                _buildHelpPoint('ℹ️', 'اردو آواز کے لیے TTS انسٹال کریں'),
+            ],
           ),
           actions: [
-            if (_showTTSIndicator)
-              TextButton(
-                onPressed: _showUrduInstallGuide,
-                child: Text(
-                  'اردو آواز انسٹال کریں',
-                  style: GoogleFonts.vazirmatn(
-                    color: Colors.orange,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            TextButton(
-              onPressed: () {
-                Get.back();
-                _testAllVoices();
-              },
-              child: Text(
-                'آواز ٹیسٹ کریں',
-                style: GoogleFonts.vazirmatn(
-                  color: Colors.blue,
-                ),
-              ),
-            ),
             TextButton(
               onPressed: () => Get.back(),
               child: Text(
-                'سمجھ گیا',
+                'بند کریں',
                 style: GoogleFonts.vazirmatn(
                   color: const Color(0xFF02A96C),
-                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
@@ -1572,33 +983,14 @@ class _ChatbotState extends State<Chatbot> {
     );
   }
 
-  Widget _buildHelpItem(String emoji, String text) {
+  Widget _buildHelpPoint(String emoji, String text) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: const Color(0xFF02A96C).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Center(
-              child: Text(
-                emoji,
-                style: const TextStyle(fontSize: 16),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              text,
-              style: GoogleFonts.vazirmatn(fontSize: 14),
-            ),
-          ),
+          Text(emoji, style: TextStyle(fontSize: 16)),
+          SizedBox(width: 10),
+          Text(text, style: GoogleFonts.vazirmatn(fontSize: 14)),
         ],
       ),
     );

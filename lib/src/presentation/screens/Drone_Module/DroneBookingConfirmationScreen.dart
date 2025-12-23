@@ -1,4 +1,5 @@
 import 'package:agri_vision/src/presentation/screens/Drone_Module/DroneDashboardScreen.dart';
+import 'package:agri_vision/src/presentation/screens/Navigation/navigation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'DroneBookingScreen.dart';
@@ -16,7 +17,7 @@ class OrderFinalPage extends StatelessWidget {
         // Use Get.offAll to navigate to DroneBookingScreen and clear the stack
         // The 'didPop' parameter is true if the route was popped.
         // Since we want to navigate regardless, we call Get.offAll.
-        Get.offAll(() => const DroneBookingScreen());
+        Get.offAll(() => const HomeNavigation());
       },
       child: Scaffold(
         backgroundColor: const Color(0xFF02a96c),
@@ -61,7 +62,7 @@ class OrderFinalPage extends StatelessWidget {
                     ),
                     onPressed: () {
                       // Navigate to DroneBookingScreen and remove all previous routes
-                      Get.offAll(() => const DroneServiceScreen());
+                      Get.offAll(() => const HomeNavigation());
                     },
                     child: const Text(
                       'واپس جائیں',

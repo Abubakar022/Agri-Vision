@@ -17,7 +17,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
   String? errorMessage;
   List<dynamic> allOrders = [];
   
-  // 🔹 Backend URL
+  // 🔹 بیک اینڈ URL
   static const String baseUrl = 'https://agrivision-backend-1075549714370.us-central1.run.app';
 
   @override
@@ -28,7 +28,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
     });
   }
 
-  // 🔹 Fetch data from MongoDB API (filtered by userId)
+  // 🔹 MongoDB API سے ڈیٹا حاصل کریں (userId کے مطابق فلٹر کریں)
   Future<void> fetchOrders() async {
     setState(() {
       isLoading = true;
@@ -78,105 +78,211 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
     }
   }
 
-  // 🔹 Cancel order function - SIMPLIFIED (No reason needed)
+  // 🔹 آرڈر منسوخ کرنے سے پہلے تصدیقی ڈائیلاگ دکھائیں
+  Future<void> _showCancelConfirmation(String orderId, String userName) async {
+    final bool? result = await Get.dialog<bool>(
+      Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        backgroundColor: Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // انتباہی آئیکن
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: Colors.orange.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.orange, width: 2),
+                ),
+                child: const Icon(
+                  Icons.warning_amber_rounded,
+                  color: Colors.orange,
+                  size: 32,
+                ),
+              ),
+              
+              const SizedBox(height: 20),
+              
+              // عنوان
+              const Text(
+                'آرڈر منسوخ کریں',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              
+              const SizedBox(height: 16),
+              
+              // پیغام
+              Text(
+                'کیا آپ واقعی آرڈر منسوخ کرنا چاہتے ہیں؟',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: Colors.black54,
+                  height: 1.5,
+                ),
+              ),
+              
+              const SizedBox(height: 8),
+              
+              const Text(
+                'یہ عمل واپس نہیں لیا جا سکتا۔',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey,
+                ),
+              ),
+              
+              const SizedBox(height: 24),
+              
+              // بٹنوں کی قطار
+              Row(
+                children: [
+                  // نہیں بٹن
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Get.back(result: false),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        side: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      child: const Text(
+                        'نہیں',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  
+                  const SizedBox(width: 16),
+                  
+                  // ہاں بٹن (گرین تھیم)
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => Get.back(result: true),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF02A96C),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Text(
+                        'ہاں، منسوخ کریں',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (result == true) {
+      await cancelOrder(orderId, userName);
+    }
+  }
+
+  // 🔹 آرڈر منسوخ کرنے کی فنکشن
   Future<void> cancelOrder(String orderId, String userName) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final uid = prefs.getString('userId');
-      
-      if (uid == null) {
-        Get.snackbar('خرابی', 'یوزر آئی ڈی نہیں ملی۔', backgroundColor: Colors.red, colorText: Colors.white);
+
+      if (uid == null || uid.isEmpty) {
+        Get.snackbar(
+          'خرابی', 
+          'یوزر آئی ڈی نہیں ملی۔ براہ کرم دوبارہ لاگ ان کریں۔',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
         return;
       }
 
-      // Show simple confirmation dialog (no reason needed)
-      final bool? confirm = await Get.dialog<bool>(
-        Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.warning, color: Colors.orange, size: 50),
-                const SizedBox(height: 16),
-                const Text(
-                  'آرڈر منسوخ کریں',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'کیا آپ واقعی "$userName" کا آرڈر منسوخ کرنا چاہتے ہیں؟',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 16),
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Get.back(result: false),
-                        child: const Text('نہیں'),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () => Get.back(result: true),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
-                        ),
-                        child: const Text('ہاں', style: TextStyle(color: Colors.white)),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
+      // Postman کی طرح URL بنائیں: /user/order/:id/cancel/:userId
+      final url = Uri.parse('$baseUrl/user/order/$orderId/cancel/$uid');
+
+      // DELETE درخواست بھیجیں (صرف URL)
+      final response = await http.delete(
+        url,
+        headers: {'Content-Type': 'application/json'},
       );
 
-      if (confirm == true) {
-        // 🔹 Updated URL - Just userId and orderId in body
-        final url = Uri.parse('$baseUrl/user/order/$orderId/cancel');
-        
-        final response = await http.put(
-          url,
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({'userId': uid}), // Just send userId in body
-        );
-
-        print('Cancel Response Status: ${response.statusCode}');
-        print('Cancel Response Body: ${response.body}');
-
-        if (response.statusCode == 200) {
-          final data = jsonDecode(response.body);
-          if (data['status'] == 'success') {
-            Get.snackbar('کامیابی', 'آرڈر کامیابی سے منسوخ ہو گیا', 
-              backgroundColor: const Color(0xFF02A96C), colorText: Colors.white);
-            fetchOrders(); // Refresh the list
-          } else {
-            Get.snackbar('خرابی', data['message'] ?? 'آرڈر منسوخ کرنے میں مسئلہ', 
-              backgroundColor: Colors.red, colorText: Colors.white);
-          }
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['status'] == 'success') {
+          Get.snackbar(
+            'کامیابی',
+            'آرڈر کامیابی سے منسوخ ہو گیا',
+            backgroundColor: const Color(0xFF02A96C),
+            colorText: Colors.white,
+          );
+          fetchOrders(); // لسٹ ریفریش کریں
         } else {
-          Get.snackbar('خرابی', 'سرور نے ${response.statusCode} کا ایرر واپس کیا۔', 
-            backgroundColor: Colors.red, colorText: Colors.white);
+          Get.snackbar(
+            'خرابی',
+            data['message'] ?? 'آرڈر منسوخ کرنے میں مسئلہ',
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+          );
         }
+      } else if (response.statusCode == 404) {
+        Get.snackbar(
+          'خرابی',
+          'آرڈر نہیں ملا۔',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      } else if (response.statusCode == 403) {
+        Get.snackbar(
+          'خرابی',
+          'آپ کے پاس اس آرڈر کو منسوخ کرنے کی اجازت نہیں ہے۔',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      } else {
+        Get.snackbar(
+          'خرابی',
+          'سرور نے ${response.statusCode} کا ایرر واپس کیا۔',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
       }
     } catch (e) {
-      Get.snackbar('خرابی', 'کنکشن میں مسئلہ: $e', 
-        backgroundColor: Colors.red, colorText: Colors.white);
+      Get.snackbar(
+        'خرابی',
+        'کنکشن میں مسئلہ: $e',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     }
   }
 
-  // 🔹 Convert numeric status → readable Urdu label
+  // 🔹 نمبری اسٹیٹس کو پڑھنے والے اردو لیبل میں تبدیل کریں
   String getStatusText(int status) {
     switch (status) {
       case 1:
@@ -192,7 +298,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
     }
   }
 
-  // 🔹 Get status icon
+  // 🔹 اسٹیٹس آئیکن حاصل کریں
   IconData getStatusIcon(int status) {
     switch (status) {
       case 1:
@@ -208,7 +314,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
     }
   }
 
-  // 🔹 Get status color
+  // 🔹 اسٹیٹس کا رنگ حاصل کریں
   Color getStatusColor(int status) {
     switch (status) {
       case 1:
@@ -224,13 +330,18 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
     }
   }
 
-  // 🔹 Check if cancel option should be shown (only pending orders)
+  // 🔹 چیک کریں کہ کیا منسوخ کا آپشن دکھانا چاہیے (صرف منتظر آرڈرز)
   bool shouldShowCancelOption(dynamic order) {
     final status = order['status'];
-    return status == 1; // Only pending orders can be cancelled
+    // منسوخ صرف "تمام" یا "منتظر" فلٹر میں دکھائیں
+    if (selectedFilter == 'تمام' || selectedFilter == 'منتظر') {
+      // صرف منتظر آرڈرز منسوخ کیے جا سکتے ہیں (اسٹیٹس 1)
+      return status == 1;
+    }
+    return false;
   }
 
-  // 🔹 Filtered list according to selected filter
+  // 🔹 منتخب فلٹر کے مطابق فلٹرڈ لسٹ
   List<dynamic> get filteredOrders {
     if (selectedFilter == 'تمام') return allOrders;
     return allOrders.where((order) {
@@ -281,7 +392,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
     );
   }
 
-  // 🔹 Loading State
+  // 🔹 لوڈنگ اسٹیٹ
   Widget _buildLoadingState() {
     return Center(
       child: Column(
@@ -305,7 +416,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
     );
   }
 
-  // 🔹 Error State
+  // 🔹 خرابی اسٹیٹ
   Widget _buildErrorState() {
     return Center(
       child: Padding(
@@ -361,11 +472,11 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
     );
   }
 
-  // 🔹 Orders List UI - FIXED OVERFLOW
+  // 🔹 آرڈرز لسٹ UI
   Widget _buildOrderList() {
     return Column(
       children: [
-        // 🔹 Filter Chips Section
+        // 🔹 فلٹر چپس سیکشن
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -383,15 +494,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'فلٹرز',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF02A96C),
-                ),
-              ),
-              const SizedBox(height: 12),
+            
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
@@ -412,7 +515,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
           ),
         ),
 
-        // 🔹 Orders Count
+        // 🔹 آرڈرز کا شمار
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
@@ -440,7 +543,13 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
 
         const SizedBox(height: 12),
 
-        // 🔹 Orders List with FIXED LAYOUT
+        // 🔹 منسوخ کے آپشن کے لیے ہدایات
+        if (selectedFilter == 'تمام' || selectedFilter == 'منتظر')
+       
+
+        const SizedBox(height: 12),
+
+        // 🔹 آرڈرز لسٹ
         Expanded(
           child: filteredOrders.isEmpty
               ? _buildEmptyState()
@@ -474,11 +583,11 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Header row with status and cancel button
+                            // اسٹیٹس اور منسوخ بٹن کے ساتھ ہیڈر قطار
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                // Status badge
+                                // اسٹیٹس بیج
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                   decoration: BoxDecoration(
@@ -503,19 +612,18 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                                   ),
                                 ),
                                 
-                                // Cancel button (only for pending orders)
+                                // منسوخ بٹن (صرف منتظر آرڈرز کے لیے)
                                 if (showCancelOption)
                                   ElevatedButton.icon(
-                                    onPressed: () => cancelOrder(order['_id'], userName),
+                                    onPressed: () => _showCancelConfirmation(order['_id'], userName),
                                     icon: const Icon(Icons.cancel, size: 16),
                                     label: const Text('منسوخ کریں'),
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.orange.withOpacity(0.1),
-                                      foregroundColor: Colors.orange,
+                                      backgroundColor: const Color(0xFF02A96C),
+                                      foregroundColor: Colors.white,
                                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(12),
-                                        side: BorderSide(color: Colors.orange.withOpacity(0.3)),
                                       ),
                                     ),
                                   ),
@@ -524,7 +632,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                             
                             const SizedBox(height: 12),
                             
-                            // User info
+                            // صارف کی معلومات
                             Text(
                               userName,
                               style: const TextStyle(
@@ -536,7 +644,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                             
                             const SizedBox(height: 8),
                             
-                            // Order details
+                            // آرڈر کی تفصیلات
                             _buildOrderDetail('📍', '${order['district'] ?? ''}, ${order['tehsil'] ?? ''}'),
                             _buildOrderDetail('📏', '${order['acres']} ایکڑ'),
                             _buildOrderDetail('💰', '${order['price']} روپے'),
@@ -554,7 +662,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
     );
   }
 
-  // 🔹 Order Detail Row
+  // 🔹 آرڈر کی تفصیل قطار
   Widget _buildOrderDetail(String icon, String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
@@ -576,7 +684,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
     );
   }
 
-  // 🔹 Empty State
+  // 🔹 خالی اسٹیٹ
   Widget _buildEmptyState() {
     return Center(
       child: Padding(
@@ -622,7 +730,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
     );
   }
 
-  // 🔹 Filter Chip Widget
+  // 🔹 فلٹر چپ ویجٹ
   Widget _buildFilterChip(String label, IconData icon) {
     final isSelected = selectedFilter == label;
     return GestureDetector(
