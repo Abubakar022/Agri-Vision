@@ -7,8 +7,11 @@ environment:
   sdk: ^3.9.2
 
 dependencies:
+  fl_chart: ^1.1.1
   flutter:
     sdk: flutter
+  flutter_dotenv: ^6.0.0
+  get: ^4.7.3
   get_storage: ^2.1.1
   get_x: ^5.0.0
   http: ^1.6.0

@@ -1,6 +1,7 @@
+import 'package:admin_app/app/models/order_model.dart';
+import 'package:admin_app/app/services/api_service.dart';
 import 'package:get/get.dart';
-import 'package:admin_dashboard/app/models/order_model.dart';
-import 'package:admin_dashboard/app/services/api_service.dart';
+
 
 class OrderController extends GetxController {
   final ApiService _apiService = Get.find();
@@ -59,7 +60,7 @@ class OrderController extends GetxController {
   Future<void> updateOrderStatus(String orderId, int status, {String? reason}) async {
     try {
       final data = {'status': status};
-      if (reason != null) data['cancellationReason'] = reason;
+      if (reason != null) data['cancellationReason'] = reason as int;
       
       await _apiService.put('/admin/order/$orderId/status', data);
       await fetchOrders();
