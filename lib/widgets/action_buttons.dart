@@ -4,63 +4,62 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
+
 class ActionButtons extends StatelessWidget {
   final Order order;
   final OrderController orderController = Get.find();
 
-  ActionButtons({required this.order});
+  ActionButtons({super.key, required this.order});
 
   @override
   Widget build(BuildContext context) {
     return Card(
       elevation: 2,
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               'Manage Order',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
+
             Wrap(
-              spacing: 12,
-              runSpacing: 12,
+              spacing: 8,
+              runSpacing: 8,
               children: [
-                if (order.status == 1) // Pending
-                  ElevatedButton.icon(
-                    onPressed: () => _acceptOrder(),
-                    icon: Icon(Icons.check),
-                    label: Text('Accept'),
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                  ),
-                if (order.status == 4) // In Progress
-                  ElevatedButton.icon(
-                    onPressed: () => orderController.updateOrderStatus(order.id, 2),
-                    icon: Icon(Icons.done_all),
-                    label: Text('Mark Complete'),
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
-                  ),
+                if (order.status == 1)
+                  _btn(Icons.check, 'Accept', Colors.green, _acceptOrder),
+
+                if (order.status == 4)
+                  _btn(Icons.done_all, 'Complete', Colors.blue,
+                      () => orderController.updateOrderStatus(order.id, 2)),
+
                 if (order.status == 1 || order.status == 4)
-                  ElevatedButton.icon(
-                    onPressed: () => _showCancelDialog(context),
-                    icon: Icon(Icons.cancel),
-                    label: Text('Cancel'),
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                  ),
-                ElevatedButton.icon(
-                  onPressed: () => _showScheduleDialog(context),
-                  icon: Icon(Icons.schedule),
-                  label: Text('Schedule'),
-                ),
+                  _btn(Icons.cancel, 'Cancel', Colors.red,
+                      () => _showCancelDialog(context)),
+
+                _btn(Icons.schedule, 'Schedule', null,
+                    () => _showScheduleDialog(context)),
               ],
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _btn(
+      IconData icon, String label, Color? color, VoidCallback onTap) {
+    return ElevatedButton.icon(
+      icon: Icon(icon, size: 18),
+      label: Text(label),
+      onPressed: onTap,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: color,
+        minimumSize: const Size(120, 40),
       ),
     );
   }
@@ -70,43 +69,45 @@ class ActionButtons extends StatelessWidget {
   }
 
   void _showCancelDialog(BuildContext context) {
-    TextEditingController reasonController = TextEditingController();
-    
+    final reasonController = TextEditingController();
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Cancel Order'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Please provide a reason for cancellation:'),
-            SizedBox(height: 16),
-            TextField(
-              controller: reasonController,
-              decoration: InputDecoration(
-                hintText: 'Enter reason...',
-                border: OutlineInputBorder(),
+      builder: (_) => AlertDialog(
+        title: const Text('Cancel Order'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Please provide cancellation reason'),
+              const SizedBox(height: 12),
+              TextField(
+                controller: reasonController,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  hintText: 'Enter reason...',
+                ),
               ),
-              maxLines: 3,
-            ),
-          ],
+            ],
+          ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: Text('Cancel'),
-          ),
+          TextButton(onPressed: Get.back, child: const Text('Close')),
           ElevatedButton(
-            onPressed: () {
-              if (reasonController.text.isNotEmpty) {
-                orderController.updateOrderStatus(order.id, 3, reason: reasonController.text);
-              } else {
-                Get.snackbar('Error', 'Please provide a reason');
-              }
-            },
-            child: Text('Confirm'),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () {
+              if (reasonController.text.isEmpty) {
+                Get.snackbar('Error', 'Reason required');
+                return;
+              }
+              orderController.updateOrderStatus(
+                order.id,
+                3,
+                reason: reasonController.text,
+              );
+            },
+            child: const Text('Confirm'),
           ),
         ],
       ),
@@ -114,63 +115,59 @@ class ActionButtons extends StatelessWidget {
   }
 
   void _showScheduleDialog(BuildContext context) {
-    DateTime selectedDate = DateTime.now();
-    TimeOfDay selectedTime = TimeOfDay.now();
-
-    void updateSchedule() {
-      final scheduledDateTime = DateTime(
-        selectedDate.year,
-        selectedDate.month,
-        selectedDate.day,
-        selectedTime.hour,
-        selectedTime.minute,
-      );
-      orderController.scheduleOrder(order.id, scheduledDateTime);
-    }
+    DateTime date = DateTime.now();
+    TimeOfDay time = TimeOfDay.now();
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Schedule Order'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: Icon(Icons.calendar_today),
-              title: Text('Select Date'),
-              subtitle: Text(DateFormat('MMM dd, yyyy').format(selectedDate)),
-              onTap: () async {
-                final date = await showDatePicker(
-                  context: context,
-                  initialDate: selectedDate,
-                  firstDate: DateTime.now(),
-                  lastDate: DateTime.now().add(Duration(days: 365)),
-                );
-                if (date != null) selectedDate = date;
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.access_time),
-              title: Text('Select Time'),
-              subtitle: Text(selectedTime.format(context)),
-              onTap: () async {
-                final time = await showTimePicker(
-                  context: context,
-                  initialTime: selectedTime,
-                );
-                if (time != null) selectedTime = time;
-              },
-            ),
-          ],
+      builder: (_) => AlertDialog(
+        title: const Text('Schedule Order'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.calendar_today),
+                title: const Text('Select Date'),
+                subtitle: Text(DateFormat('MMM dd, yyyy').format(date)),
+                onTap: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: date,
+                    firstDate: DateTime.now(),
+                    lastDate: DateTime.now().add(const Duration(days: 365)),
+                  );
+                  if (picked != null) date = picked;
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.access_time),
+                title: const Text('Select Time'),
+                subtitle: Text(time.format(context)),
+                onTap: () async {
+                  final picked =
+                      await showTimePicker(context: context, initialTime: time);
+                  if (picked != null) time = picked;
+                },
+              ),
+            ],
+          ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: Text('Cancel'),
-          ),
+          TextButton(onPressed: Get.back, child: const Text('Cancel')),
           ElevatedButton(
-            onPressed: updateSchedule,
-            child: Text('Schedule'),
+            onPressed: () {
+              final scheduled = DateTime(
+                date.year,
+                date.month,
+                date.day,
+                time.hour,
+                time.minute,
+              );
+              orderController.scheduleOrder(order.id, scheduled);
+              Get.back();
+            },
+            child: const Text('Schedule'),
           ),
         ],
       ),
