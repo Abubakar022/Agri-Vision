@@ -191,9 +191,12 @@ class _UserInformationState extends State<UserInformation> {
     ),
     decoration: InputDecoration(
       labelText: "ای میل ایڈریس",
-      labelStyle: GoogleFonts.vazirmatn(),
+      labelStyle: GoogleFonts.vazirmatn(
+    color: const Color(0xFF02A96C), 
+  ),
       hintText: "kisaan@gmail.com",
       hintStyle: GoogleFonts.vazirmatn(color: Colors.grey),
+      
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: Colors.grey),

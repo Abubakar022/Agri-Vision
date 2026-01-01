@@ -381,7 +381,7 @@ class _CropScanScreenState extends State<CropScanScreen> {
             },
           ),
           title: Text(
-            "زرعی ویژن",
+            "  ایگری ویژن    ",
             style: GoogleFonts.vazirmatn(
               fontSize: 22,
               fontWeight: FontWeight.bold,
