@@ -6,14 +6,14 @@ import 'package:get/get.dart';
 
 class OrdersView extends StatelessWidget {
   OrdersView({Key? key}) : super(key: key);
-  
+
   final OrderController orderController = Get.find();
-  
+
   // CORRECT: List of Maps, not List of Strings
   final List<Map<String, dynamic>> statusFilters = [
     {'value': 'all', 'label': 'All Orders', 'color': Colors.grey},
     {'value': 'pending', 'label': 'Pending', 'color': Colors.orange},
-    {'value': 'in-progress', 'label': 'In Progress', 'color': Colors.blue},
+    {'value': 'Scheduled', 'label': 'In Progress', 'color': Colors.blue},
     {'value': 'completed', 'label': 'Completed', 'color': Colors.green},
     {'value': 'cancelled', 'label': 'Cancelled', 'color': Colors.red},
   ];
@@ -59,22 +59,23 @@ class OrdersView extends StatelessWidget {
                       ],
                     ),
                   ),
-                  
+
                   // Filter Chips
                   Container(
                     height: 50,
                     padding: EdgeInsets.symmetric(horizontal: 12),
                     child: Obx(() {
                       // Safe access to selectedStatus
-                      final selectedStatus = orderController.selectedStatus.value;
-                      
+                      final selectedStatus =
+                          orderController.selectedStatus.value;
+
                       return ListView.builder(
                         scrollDirection: Axis.horizontal,
                         itemCount: statusFilters.length,
                         itemBuilder: (context, index) {
                           final filter = statusFilters[index];
                           final isSelected = selectedStatus == filter['value'];
-                          
+
                           return Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 4),
                             child: ChoiceChip(
@@ -83,16 +84,22 @@ class OrdersView extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w500,
-                                  color: isSelected ? Colors.white : Colors.grey[700],
+                                  color: isSelected
+                                      ? Colors.white
+                                      : Colors.grey[700],
                                 ),
                               ),
                               selected: isSelected,
                               onSelected: (selected) {
-                                orderController.selectedStatus.value = filter['value'] as String;
+                                orderController.selectedStatus.value =
+                                    filter['value'] as String;
                               },
                               backgroundColor: Colors.grey[100],
                               selectedColor: filter['color'] as Color,
-                              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(20),
                               ),
@@ -110,20 +117,40 @@ class OrdersView extends StatelessWidget {
             // Orders Count Summary
             Obx(() {
               try {
-                final pendingCount = orderController.orders.where((o) => o.status == 1).length;
-                final inProgressCount = orderController.orders.where((o) => o.status == 4).length;
-                final completedCount = orderController.orders.where((o) => o.status == 2).length;
-                final cancelledCount = orderController.orders.where((o) => o.status == 3).length;
-                
+                final pendingCount = orderController.orders
+                    .where((o) => o.status == 1)
+                    .length;
+                final inProgressCount = orderController.orders
+                    .where((o) => o.status == 4)
+                    .length;
+                final completedCount = orderController.orders
+                    .where((o) => o.status == 2)
+                    .length;
+                final cancelledCount = orderController.orders
+                    .where((o) => o.status == 3)
+                    .length;
+
                 return Container(
                   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
                       _buildStatusCount('Pending', pendingCount, Colors.orange),
-                      _buildStatusCount('In Progress', inProgressCount, Colors.blue),
-                      _buildStatusCount('Completed', completedCount, Colors.green),
-                      _buildStatusCount('Cancelled', cancelledCount, Colors.red),
+                      _buildStatusCount(
+                        'Scheduled',
+                        inProgressCount,
+                        Colors.blue,
+                      ),
+                      _buildStatusCount(
+                        'Completed',
+                        completedCount,
+                        Colors.green,
+                      ),
+                      _buildStatusCount(
+                        'Cancelled',
+                        cancelledCount,
+                        Colors.red,
+                      ),
                     ],
                   ),
                 );
@@ -154,7 +181,7 @@ class OrdersView extends StatelessWidget {
                 try {
                   // Get filtered orders
                   final orders = _getFilteredOrders();
-                  
+
                   if (orders.isEmpty) {
                     return Center(
                       child: Column(
@@ -210,7 +237,8 @@ class OrdersView extends StatelessWidget {
                     child: ListView.separated(
                       padding: EdgeInsets.all(16),
                       itemCount: orders.length,
-                      separatorBuilder: (context, index) => SizedBox(height: 12),
+                      separatorBuilder: (context, index) =>
+                          SizedBox(height: 12),
                       itemBuilder: (context, index) {
                         final order = orders[index];
                         return InkWell(
@@ -227,11 +255,7 @@ class OrdersView extends StatelessWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          Icons.error_outline,
-                          size: 64,
-                          color: Colors.red,
-                        ),
+                        Icon(Icons.error_outline, size: 64, color: Colors.red),
                         SizedBox(height: 16),
                         Text(
                           'Error loading orders',
@@ -274,23 +298,25 @@ class OrdersView extends StatelessWidget {
   List<Order> _getFilteredOrders() {
     try {
       final selectedStatus = orderController.selectedStatus.value;
-      
+
       if (selectedStatus == 'all') {
         return orderController.orders;
       }
-      
+
       // Map status names to codes (1=Pending, 2=Completed, 3=Cancelled, 4=In Progress)
       final statusMap = {
         'pending': 1,
         'completed': 2,
         'cancelled': 3,
-        'in-progress': 4,
+        'Scheduled': 4,
       };
-      
+
       final statusCode = statusMap[selectedStatus];
       if (statusCode == null) return orderController.orders;
-      
-      return orderController.orders.where((order) => order.status == statusCode).toList();
+
+      return orderController.orders
+          .where((order) => order.status == statusCode)
+          .toList();
     } catch (e) {
       print('Error filtering orders: $e');
       return orderController.orders;
@@ -316,13 +342,7 @@ class OrdersView extends StatelessWidget {
           ),
         ),
         SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[600],
-          ),
-        ),
+        Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
       ],
     );
   }
