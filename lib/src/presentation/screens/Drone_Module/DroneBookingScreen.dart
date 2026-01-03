@@ -427,7 +427,10 @@ class _DroneBookingScreenState extends State<DroneBookingScreen> {
                               label: Padding(
                                 padding: const EdgeInsets.symmetric(vertical: 12),
                                 child: Text(
-                                  _isSubmitting ? "بجا رہا ہے..." : "بکنگ جمع کریں",
+                                _isSubmitting 
+    ? "درخواست جمع ہو رہی ہے..." 
+    : "بکنگ جمع کریں"
+,
                                   style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
                                 ),
                               ),
