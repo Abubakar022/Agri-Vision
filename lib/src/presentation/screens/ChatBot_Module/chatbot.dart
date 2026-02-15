@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -6,6 +7,7 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:http/http.dart' as http;
 
 class Chatbot extends StatefulWidget {
   final String? initialMessage;
@@ -41,113 +43,45 @@ class _ChatbotState extends State<Chatbot> {
   bool _showTTSIndicator = false;
   bool _isSpeaking = false;
   Map<String, String> _availableLocales = {};
-  double _speechRate = 0.52;
-  double _speechPitch = 1.15;
-  double _speechVolume = 0.92;
-  bool _ttsSettingsVisible = false;
   String _ttsEngineStatus = 'اردو آواز چیک کی جا رہی ہے';
-  Message? _currentlySpeakingMessage; // Track which message is being spoken
+  Message? _currentlySpeakingMessage;
 
-  // Enhanced chatbot responses with natural Urdu and structured format for API integration
-  final Map<String, Map<String, dynamic>> _botResponses = {
+  // ✅ WORKING API ENDPOINT - REPLACED THE DUMMY LINK
+  final String _apiEndpoint = 'https://wheat-bot-multi-1075549714370.us-central1.run.app/ask';
+
+  // Local fallback responses (only used when API fails)
+  final Map<String, Map<String, dynamic>> _fallbackResponses = {
     'پیلے دھبے': {
       'response':
           'پیلے دھبے رسٹ کی بیماری کی علامت ہیں۔ سفارش: زینب فنگسائڈ کا سپرے کریں اور پانی کا متوازن استعمال کریں۔ تین دن بعد دوبارہ چیک کریں۔',
       'disease_name': 'رسٹ (Rust)',
-      'recommendations': [
-        'زینب فنگسائڈ کا سپرے کریں',
-        'پانی کا متوازن استعمال کریں',
-        'ہر تین دن بعد حالت چیک کریں',
-        'متاثرہ پودوں کو الگ کریں'
-      ],
-      'severity': 'درمیانی',
-      'treatment': 'فنگسائیڈ سپرے'
     },
     'سڑنا': {
       'response':
           'سڑنا پاؤڈری ملڈیو ہو سکتا ہے۔ کھیت میں ہوا کی گردش بڑھائیں۔ مناسب فنگسائڈ کا استعمال کریں۔ پانی کا چھڑکاؤ کم کریں۔',
       'disease_name': 'پاؤڈری ملڈیو (Powdery Mildew)',
-      'recommendations': [
-        'کھیت میں ہوا کی گردش بڑھائیں',
-        'فنگسائڈ کا استعمال کریں',
-        'پانی کا چھڑکاؤ کم کریں',
-        'فضائی نمی کو کنٹرول کریں'
-      ],
-      'severity': 'ہلکی',
-      'treatment': 'ہوا کی گردش اور فنگسائیڈ'
     },
     'سیاہ دھبے': {
       'response':
           'سیاہ دھبے ٹیلے سنٹ کی بیماری کی علامت ہیں۔ پودوں کو الگ کریں اور کاربندازیم سپرے کریں۔',
       'disease_name': 'ٹیلے سنٹ (Tilletia)',
-      'recommendations': [
-        'متاثرہ پودوں کو فوری الگ کریں',
-        'کاربندازیم فنگسائڈ سپرے کریں',
-        'بیج کو علاج کریں',
-        'کھیت کو ہر سال تبدیل کریں'
-      ],
-      'severity': 'شدید',
-      'treatment': 'کاربندازیم فنگسائیڈ'
     },
     'جھلساؤ': {
       'response':
           'جھلساؤ کیلشیئم کی کمی کی علامت ہو سکتا ہے۔ کیلشیئم نائٹریٹ کا استعمال کریں اور پانی کا شیڈول بہتر کریں۔',
       'disease_name': 'کیلشیئم کی کمی (Calcium Deficiency)',
-      'recommendations': [
-        'کیلشیئم نائٹریٹ کا استعمال کریں',
-        'پانی کا شیڈول بہتر کریں',
-        'مٹی کی پی ایچ چیک کریں',
-        'کھاد کا متوازن استعمال کریں'
-      ],
-      'severity': 'ہلکی',
-      'treatment': 'کیلشیئم نائٹریٹ'
     },
     'سفوف نما تہ': {
       'response':
           'سفوف نما تہ پاؤڈری ملڈیو کی واضح علامت ہے۔ سلفر سپرے کریں اور کھیت کی صفائی کریں۔',
       'disease_name': 'پاؤڈری ملڈیو (Powdery Mildew)',
-      'recommendations': [
-        'سلفر بیسڈ فنگسائڈ سپرے کریں',
-        'کھیت کی صفائی کریں',
-        'پودوں کے درمیان فاصلہ رکھیں',
-        'سہ پہر کے بعد پانی نہ دیں'
-      ],
-      'severity': 'درمیانی',
-      'treatment': 'سلفر سپرے'
     },
     'default': {
       'response':
           'میں آپ کی بات سمجھ گیا ہوں۔ براہ کرم مزید تفصیل سے بیان کریں۔ مثلاً: پتے کیسی ہیں؟ کتنے دن ہوئے؟ کون سا حصہ متاثر ہے؟',
       'disease_name': 'نامعلوم',
-      'recommendations': ['مزید تفصیل درکار'],
-      'severity': 'نامعلوم',
-      'treatment': 'تشخیص درکار'
     }
   };
-
-  // Disease names in Urdu for matching
-  final List<String> _diseaseKeywords = [
-    'پیلے دھبے',
-    'زرد دھبے',
-    'پیلا',
-    'زرد',
-    'سڑنا',
-    'ملڈیو',
-    'سڑ',
-    'گلنا',
-    'سیاہ دھبے',
-    'کالے دھبے',
-    'سیاہ',
-    'کالا',
-    'جھلساؤ',
-    'جھلس',
-    'سوکھا',
-    'خشک',
-    'سفوف',
-    'سفوف نما',
-    'پاؤڈر',
-    'آٹا'
-  ];
 
   @override
   void initState() {
@@ -156,7 +90,6 @@ class _ChatbotState extends State<Chatbot> {
     _initSTT();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollToBottom();
-
       if (widget.initialMessage != null && !_initialMessageSent) {
         Future.delayed(const Duration(milliseconds: 500), () {
           _sendInitialMessage(widget.initialMessage!);
@@ -167,23 +100,17 @@ class _ChatbotState extends State<Chatbot> {
 
   @override
   void dispose() {
-    // Cancel any pending futures
     _controller.dispose();
     _scrollController.dispose();
-
-    // Stop TTS and remove handlers before disposing
     _flutterTts.setCompletionHandler(() {});
     _flutterTts.setErrorHandler((msg) {});
     _flutterTts.setStartHandler(() {});
-
     _flutterTts.stop();
-
     super.dispose();
   }
 
   void _sendInitialMessage(String message) {
     if (_initialMessageSent) return;
-
     _initialMessageSent = true;
     _controller.text = message;
     _sendMessage();
@@ -191,13 +118,9 @@ class _ChatbotState extends State<Chatbot> {
 
   Future<void> _initTTS() async {
     try {
-      print("TTS شروع ہو رہا ہے...");
-
-      // TTS سیٹنگز
       await _flutterTts.setSharedInstance(true);
       await _flutterTts.awaitSpeakCompletion(true);
 
-      // Set up completion handler with mounted check
       _flutterTts.setCompletionHandler(() {
         if (mounted) {
           setState(() {
@@ -207,7 +130,6 @@ class _ChatbotState extends State<Chatbot> {
         }
       });
 
-      // Set up error handler with mounted check
       _flutterTts.setErrorHandler((error) {
         print("بولنے میں خرابی: $error");
         if (mounted) {
@@ -218,21 +140,12 @@ class _ChatbotState extends State<Chatbot> {
         }
       });
 
-      // Set up start handler
-      _flutterTts.setStartHandler(() {
-        print("بولنا شروع ہو گیا");
-      });
-
-      // دستیاب زبانوں کی فہرست
       final languages = await _flutterTts.getLanguages;
-      print("دستیاب زبانیں: $languages");
-
       _availableLocales.clear();
       for (var locale in languages) {
         _availableLocales[locale] = locale;
       }
 
-      // اردو زبان کی تلاش
       String? selectedLocale;
       if (_availableLocales.containsKey("ur-PK")) {
         selectedLocale = "ur-PK";
@@ -241,23 +154,19 @@ class _ChatbotState extends State<Chatbot> {
       } else if (_availableLocales.containsKey("ur_IN")) {
         selectedLocale = "ur_IN";
       } else if (_availableLocales.containsKey("ar_SA")) {
-        selectedLocale = "ar_SA"; // عربی بطور متبادل
+        selectedLocale = "ar_SA";
       } else if (_availableLocales.containsKey("en_US")) {
-        selectedLocale = "en_US"; // انگریزی بطور متبادل
+        selectedLocale = "en_US";
       }
 
       if (selectedLocale != null) {
         await _flutterTts.setLanguage(selectedLocale);
-
-        // اردو/عربی کے لیے سیٹنگز
+        
         if (selectedLocale.contains("ur") || selectedLocale.contains("ar")) {
-          await _flutterTts
-              .setSpeechRate(0.45); // 0.0 - 1.0, slower = more natural
-          await _flutterTts
-              .setPitch(1.0); // 0.5 - 2.0, keep near 1.0 for natural tone
-          await _flutterTts.setVolume(0.9); // 0.0 - 1.0
+          await _flutterTts.setSpeechRate(0.45);
+          await _flutterTts.setPitch(1.0);
+          await _flutterTts.setVolume(0.9);
         } else {
-          // انگریزی کے لیے سیٹنگز
           await _flutterTts.setSpeechRate(0.48);
           await _flutterTts.setPitch(1.2);
           await _flutterTts.setVolume(0.95);
@@ -267,10 +176,8 @@ class _ChatbotState extends State<Chatbot> {
           setState(() {
             _ttsAvailable = true;
             _currentTTSLocale = selectedLocale!;
-
-            // انڈیکیٹر صرف اس صورت میں دکھائیں جب اردو دستیاب نہ ہو
             _showTTSIndicator = !selectedLocale.contains("ur");
-
+            
             if (selectedLocale.contains("ur")) {
               _ttsEngineStatus = 'اردو آواز فعال ہے';
             } else if (selectedLocale.contains("ar")) {
@@ -280,10 +187,7 @@ class _ChatbotState extends State<Chatbot> {
             }
           });
         }
-
-        print("TTS تیار ہوگیا: $selectedLocale");
       } else {
-        print("کوئی مناسب زبان نہیں ملی");
         if (mounted) {
           setState(() {
             _ttsAvailable = false;
@@ -317,83 +221,60 @@ class _ChatbotState extends State<Chatbot> {
           }
         },
       );
-      print("STT دستیاب: $_sttAvailable");
     } catch (e) {
       print("STT شروع کرنے میں خرابی: $e");
     }
   }
 
-  // Detect disease from user message
-  String _detectDisease(String userMessage) {
-    final lowerMessage = userMessage.toLowerCase();
+  // ✅ UPDATED API CALL WITH PROPER ERROR HANDLING
+  Future<Map<String, dynamic>> _getBotResponseFromAPI(String userMessage) async {
+    try {
+      print('📡 Calling API: $_apiEndpoint');
+      print('📝 Question: $userMessage');
 
-    for (var keyword in _diseaseKeywords) {
-      if (lowerMessage.contains(keyword.toLowerCase())) {
-        // Map keyword to main disease
-        if (keyword.contains('پیلے') || keyword.contains('زرد')) {
-          return 'پیلے دھبے';
-        } else if (keyword.contains('سڑنا') ||
-            keyword.contains('ملڈیو') ||
-            keyword.contains('گلنا')) {
-          return 'سڑنا';
-        } else if (keyword.contains('سیاہ') || keyword.contains('کالے')) {
-          return 'سیاہ دھبے';
-        } else if (keyword.contains('جھلساؤ') || keyword.contains('سوکھا')) {
-          return 'جھلساؤ';
-        } else if (keyword.contains('سفوف')) {
-          return 'سفوف نما تہ';
-        }
+      final response = await http.post(
+        Uri.parse(_apiEndpoint),
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'question': userMessage,
+        }),
+      ).timeout(const Duration(seconds: 15));
+
+      print('📡 Response Status: ${response.statusCode}');
+      print('📡 Response Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final answer = data['answer'] ?? 'جواب نہیں ملا';
+        
+        return {
+          'display_text': answer,
+          'from_api': true
+        };
+      } else {
+        throw Exception('API Error: ${response.statusCode}');
       }
+    } catch (e) {
+      print('❌ API Error: $e');
+      
+      // Simple fallback - just return a generic response
+      return {
+        'display_text': 'معذرت، میں فی الحال سرور سے منسلک نہیں ہو سکا۔ براہ کرم کچھ دیر بعد دوبارہ کوشش کریں۔',
+        'from_api': false,
+        'error': true
+      };
     }
-
-    return 'default';
   }
 
   Future<Map<String, dynamic>> _getBotResponse(String userMessage) async {
-    await Future.delayed(const Duration(seconds: 1));
-
-    // Detect disease from user message
-    String diseaseKey = _detectDisease(userMessage);
-
-    // Get response data
-    Map<String, dynamic> responseData =
-        _botResponses[diseaseKey] ?? _botResponses['default']!;
-
-    // Prepare response for display
-    String responseText = responseData['response'];
-
-    // Add structured data for API integration
-    Map<String, dynamic> structuredResponse = {
-      'user_query': userMessage,
-      'detected_disease': diseaseKey,
-      'disease_name': responseData['disease_name'],
-      'severity': responseData['severity'],
-      'treatment': responseData['treatment'],
-      'recommendations': responseData['recommendations'],
-      'confidence_level': diseaseKey != 'default' ? 'high' : 'low',
-      'timestamp': DateTime.now().toIso8601String(),
-      // API Integration Placeholder
-      'api_endpoint': 'https://your-api.com/predict',
-      'api_payload': {
-        'symptoms': userMessage,
-        'language': 'ur',
-        'model_version': 'v1.0'
-      }
-    };
-
-    // Log structured response (Replace with actual API call)
-    print('Structured Response: $structuredResponse');
-
-    return {
-      'display_text': responseText,
-      'structured_data': structuredResponse
-    };
+    return await _getBotResponseFromAPI(userMessage);
   }
 
   Future<void> _speak(String text, Message? message) async {
-    if (!_ttsAvailable || _isSpeaking || !mounted) {
-      return;
-    }
+    if (!_ttsAvailable || _isSpeaking || !mounted) return;
 
     try {
       setState(() {
@@ -401,15 +282,16 @@ class _ChatbotState extends State<Chatbot> {
         _currentlySpeakingMessage = message;
       });
 
-      // Stop any ongoing speech
       await _flutterTts.stop();
       await Future.delayed(const Duration(milliseconds: 100));
 
-      // متن کو قدرتی انداز میں بولنے کے لیے تیار کریں
-      String processedText = _processTextForNaturalTTS(text);
-
-      print(
-          "بول رہا ہوں: ${processedText.substring(0, min(50, processedText.length))}...");
+      String processedText = text
+          .replaceAll('۔', '۔ ... ')
+          .replaceAll('!', '! ... ')
+          .replaceAll('؟', '؟ ... ')
+          .replaceAll('،', '، ... ')
+          .replaceAll(RegExp(r'\s+'), ' ')
+          .trim();
 
       await _flutterTts.speak(processedText);
     } catch (e) {
@@ -423,11 +305,9 @@ class _ChatbotState extends State<Chatbot> {
     }
   }
 
-  // Function to stop speech
   Future<void> _stopSpeaking() async {
     try {
       await _flutterTts.stop();
-      print("بولنا روک دیا گیا");
       if (mounted) {
         setState(() {
           _isSpeaking = false;
@@ -436,33 +316,15 @@ class _ChatbotState extends State<Chatbot> {
       }
     } catch (e) {
       print("روکنے میں خرابی: $e");
-      if (mounted) {
-        setState(() {
-          _isSpeaking = false;
-          _currentlySpeakingMessage = null;
-        });
-      }
     }
   }
 
-  // Function to toggle speech
   void _toggleSpeech(String text, Message? message) {
     if (_isSpeaking) {
       _stopSpeaking();
     } else {
       _speak(text, message);
     }
-  }
-
-  String _processTextForNaturalTTS(String text) {
-    return text
-        .replaceAll('۔', '۔ ... ') // add pause after full stop
-        .replaceAll('!', '! ... ')
-        .replaceAll('؟', '؟ ... ')
-        .replaceAll('،', '، ... ')
-        .replaceAll(':', ': ... ')
-        .replaceAll(RegExp(r'\s+'), ' ') // clean extra spaces
-        .trim();
   }
 
   Future<bool> _checkPermissions() async {
@@ -477,31 +339,29 @@ class _ChatbotState extends State<Chatbot> {
   void _startListening() async {
     final hasPermission = await _checkPermissions();
     if (!hasPermission) {
-      Get.showSnackbar(
-        GetSnackBar(
-          message: 'مائیکروفون کی اجازت درکار ہے',
-          duration: const Duration(seconds: 2),
-          backgroundColor: Colors.red,
-        ),
+      Get.snackbar(
+        'اجازت درکار',
+        'مائیکروفون کی اجازت درکار ہے',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
       );
       return;
     }
 
     if (!_sttAvailable) {
-      Get.showSnackbar(
-        GetSnackBar(
-          message: 'وائس ریکگنیشن دستیاب نہیں',
-          duration: const Duration(seconds: 2),
-          backgroundColor: Colors.red,
-        ),
+      Get.snackbar(
+        'سروس دستیاب نہیں',
+        'وائس ریکگنیشن دستیاب نہیں',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
       );
       return;
     }
 
     try {
-      if (mounted) {
-        setState(() => _isListening = true);
-      }
+      if (mounted) setState(() => _isListening = true);
       _spokenText = "";
       _controller.clear();
 
@@ -522,22 +382,16 @@ class _ChatbotState extends State<Chatbot> {
       );
     } catch (e) {
       print("سننے میں خرابی: $e");
-      if (mounted) {
-        setState(() => _isListening = false);
-      }
+      if (mounted) setState(() => _isListening = false);
     }
   }
 
   void _stopListening() {
     try {
       _speech.stop();
-      if (mounted) {
-        setState(() => _isListening = false);
-      }
+      if (mounted) setState(() => _isListening = false);
     } catch (e) {
-      if (mounted) {
-        setState(() => _isListening = false);
-      }
+      if (mounted) setState(() => _isListening = false);
     }
   }
 
@@ -569,7 +423,6 @@ class _ChatbotState extends State<Chatbot> {
         text: botResponse,
         sender: 'bot',
         timestamp: DateTime.now(),
-        structuredData: response['structured_data'],
       );
 
       if (mounted) {
@@ -581,20 +434,14 @@ class _ChatbotState extends State<Chatbot> {
 
       _scrollToBottom();
 
-      // Auto-speak only for disease responses
-      if (_ttsAvailable &&
-          response['structured_data']['detected_disease'] != 'default') {
+      if (_ttsAvailable) {
         Future.delayed(const Duration(milliseconds: 800), () {
-          if (mounted) {
-            _speak(botResponse, botMessage);
-          }
+          if (mounted) _speak(botResponse, botMessage);
         });
       }
     } catch (e) {
       print("جواب لینے میں خرابی: $e");
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -610,20 +457,13 @@ class _ChatbotState extends State<Chatbot> {
     });
   }
 
-  // Urdu text input validator
   bool _isUrduText(String text) {
     if (text.trim().isEmpty) return true;
-
-    // Urdu Unicode range: \u0600-\u06FF
-    // Also includes Arabic and Persian characters
-    final urduRegex = RegExp(
-        r'^[\u0600-\u06FF\s\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF.,،؛!؟:()\-0-9]+$');
+    final urduRegex = RegExp(r'^[\u0600-\u06FF\s\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF.,،؛!؟:()\-0-9]+$');
     return urduRegex.hasMatch(text);
   }
 
-  // Filter English characters from input
   String _filterEnglish(String text) {
-    // Remove English letters (A-Z, a-z)
     return text.replaceAll(RegExp(r'[A-Za-z]'), '');
   }
 
@@ -664,7 +504,6 @@ class _ChatbotState extends State<Chatbot> {
       ),
       body: Column(
         children: [
-          // TTS Status Banner (Only show if Urdu voice not available)
           if (_showTTSIndicator)
             Container(
               width: double.infinity,
@@ -678,7 +517,7 @@ class _ChatbotState extends State<Chatbot> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(Icons.info, color: Colors.orange, size: 18),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         isArabicTTS
@@ -695,8 +534,6 @@ class _ChatbotState extends State<Chatbot> {
                 ),
               ),
             ),
-
-          // Chat Messages
           Expanded(
             child: Container(
               margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -719,15 +556,12 @@ class _ChatbotState extends State<Chatbot> {
                   if (_isLoading && index == _messages.length) {
                     return _buildLoadingBubble();
                   }
-
                   final message = _messages[index];
                   return _buildMessageBubble(message);
                 },
               ),
             ),
           ),
-
-          // Input Area
           _buildInputArea(),
         ],
       ),
@@ -736,14 +570,12 @@ class _ChatbotState extends State<Chatbot> {
 
   Widget _buildMessageBubble(Message message) {
     final isUser = message.sender == 'user';
-    final isSpeakingThisMessage =
-        _currentlySpeakingMessage == message && _isSpeaking;
+    final isSpeakingThisMessage = _currentlySpeakingMessage == message && _isSpeaking;
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
       child: Row(
-        mainAxisAlignment:
-            isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!isUser) ...[
@@ -754,15 +586,13 @@ class _ChatbotState extends State<Chatbot> {
                 color: const Color(0xFF02A96C),
                 shape: BoxShape.circle,
               ),
-              child:
-                  const Icon(Icons.agriculture, color: Colors.white, size: 20),
+              child: const Icon(Icons.agriculture, color: Colors.white, size: 20),
             ),
             const SizedBox(width: 8),
           ],
           Flexible(
             child: Column(
-              crossAxisAlignment:
-                  isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              crossAxisAlignment: isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
               children: [
                 Container(
                   padding: const EdgeInsets.all(12),
@@ -779,7 +609,6 @@ class _ChatbotState extends State<Chatbot> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // TTS Button - Always show for bot messages
                       if (!isUser && _ttsAvailable)
                         Container(
                           margin: const EdgeInsets.only(right: 8),
@@ -793,8 +622,7 @@ class _ChatbotState extends State<Chatbot> {
                                         ? const Color(0xFF02A96C)
                                         : Colors.orange,
                                   ),
-                            onPressed: () =>
-                                _toggleSpeech(message.text, message),
+                            onPressed: () => _toggleSpeech(message.text, message),
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(
                               minWidth: 30,
@@ -803,38 +631,45 @@ class _ChatbotState extends State<Chatbot> {
                           ),
                         ),
                       Flexible(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Pulsing animation when speaking
-                            if (isSpeakingThisMessage)
-                              Row(
-                                children: [
-                                  _buildSoundWave(),
-                                  const SizedBox(width: 8),
-                                ],
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (isSpeakingThisMessage)
+                                Row(
+                                  children: [
+                                    _buildSoundWave(),
+                                    const SizedBox(width: 8),
+                                  ],
+                                ),
+                              Container(
+                                width: double.infinity,
+                                child: Text(
+                                  message.text,
+                                  textAlign: TextAlign.right,
+                                  textDirection: TextDirection.rtl,
+                                  style: GoogleFonts.vazirmatn(
+                                    fontSize: 14,
+                                    color: isUser ? Colors.white : Colors.black87,
+                                  ),
+                                ),
                               ),
-                            Text(
-                              message.text,
-                              textDirection: TextDirection.rtl,
-                              style: GoogleFonts.vazirmatn(
-                                fontSize: 14,
-                                color: isUser ? Colors.white : Colors.black87,
+                              const SizedBox(height: 4),
+                              Container(
+                                width: double.infinity,
+                                child: Text(
+                                  _formatTime(message.timestamp),
+                                  textAlign: TextAlign.right,
+                                  textDirection: TextDirection.rtl,
+                                  style: GoogleFonts.vazirmatn(
+                                    fontSize: 10,
+                                    color: isUser ? Colors.white70 : Colors.grey[600],
+                                  ),
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              _formatTime(message.timestamp),
-                              style: GoogleFonts.vazirmatn(
-                                fontSize: 10,
-                                color:
-                                    isUser ? Colors.white70 : Colors.grey[600],
-                              ),
-                            ),
-                            // Show structured data for API debugging
-                            if (message.structuredData != null && !isUser)
-                              _buildStructuredData(message.structuredData!),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -865,62 +700,17 @@ class _ChatbotState extends State<Chatbot> {
       height: 20,
       child: Row(
         mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildSoundWaveBar(100),
-          const SizedBox(width: 2),
-          _buildSoundWaveBar(140),
-          const SizedBox(width: 2),
-          _buildSoundWaveBar(180),
-          const SizedBox(width: 2),
-          _buildSoundWaveBar(140),
-          const SizedBox(width: 2),
-          _buildSoundWaveBar(100),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSoundWaveBar(int delay) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 500),
-      width: 3,
-      height: _isSpeaking ? Random().nextInt(15) + 5 : 5,
-      decoration: BoxDecoration(
-        color: const Color(0xFF02A96C),
-        borderRadius: BorderRadius.circular(2),
-      ),
-    );
-  }
-
-  Widget _buildStructuredData(Map<String, dynamic> data) {
-    return Container(
-      margin: const EdgeInsets.only(top: 8),
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey[300]!),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'API ڈیٹا (ڈیبگنگ کے لیے):',
-            style: GoogleFonts.vazirmatn(
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey[700],
+        children: List.generate(5, (index) {
+          return Container(
+            width: 3,
+            height: _isSpeaking ? Random().nextInt(15) + 5 : 5,
+            margin: const EdgeInsets.symmetric(horizontal: 1),
+            decoration: BoxDecoration(
+              color: const Color(0xFF02A96C),
+              borderRadius: BorderRadius.circular(2),
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'بیماری: ${data['disease_name']} | شدت: ${data['severity']}',
-            style: GoogleFonts.vazirmatn(
-              fontSize: 9,
-              color: Colors.grey[600],
-            ),
-          ),
-        ],
+          );
+        }),
       ),
     );
   }
@@ -982,7 +772,6 @@ class _ChatbotState extends State<Chatbot> {
         color: const Color(0xFFFDF8E3),
         child: Row(
           children: [
-            // Voice Button
             Container(
               width: 50,
               height: 50,
@@ -999,10 +788,7 @@ class _ChatbotState extends State<Chatbot> {
                 onPressed: _isListening ? _stopListening : _startListening,
               ),
             ),
-
             const SizedBox(width: 8),
-
-            // Text Input with Urdu-only validation
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
@@ -1041,7 +827,6 @@ class _ChatbotState extends State<Chatbot> {
                           ),
                         ),
                         onChanged: (value) {
-                          // Filter English characters
                           if (value.isNotEmpty && !_isUrduText(value)) {
                             final filtered = _filterEnglish(value);
                             if (filtered != value) {
@@ -1052,19 +837,13 @@ class _ChatbotState extends State<Chatbot> {
                               );
                             }
                           }
-                          if (mounted) {
-                            setState(() {}); // Rebuild to show/hide error
-                          }
+                          if (mounted) setState(() {});
                         },
                         onSubmitted: (value) {
-                          if (_isUrduText(value)) {
-                            _sendMessage();
-                          }
+                          if (_isUrduText(value)) _sendMessage();
                         },
                       ),
                     ),
-
-                    // Send Button (disabled for non-Urdu text)
                     Container(
                       margin: const EdgeInsets.only(right: 8),
                       decoration: BoxDecoration(
@@ -1100,13 +879,9 @@ class _ChatbotState extends State<Chatbot> {
     final now = DateTime.now();
     final difference = now.difference(timestamp);
 
-    if (difference.inMinutes < 1) {
-      return 'ابھی';
-    } else if (difference.inMinutes < 60) {
-      return '${difference.inMinutes} منٹ پہلے';
-    } else {
-      return '${difference.inHours} گھنٹے پہلے';
-    }
+    if (difference.inMinutes < 1) return 'ابھی';
+    if (difference.inMinutes < 60) return '${difference.inMinutes} منٹ پہلے';
+    return '${difference.inHours} گھنٹے پہلے';
   }
 
   void _showHelpDialog() {
@@ -1137,7 +912,6 @@ class _ChatbotState extends State<Chatbot> {
               _buildHelpPoint('✍️', 'صرف اردو میں لکھیں'),
               _buildHelpPoint('🔊', 'جواب سننے کے لیے سپیکر آئیکن دبائیں'),
               _buildHelpPoint('⏹️', 'آواز بند کرنے کے لیے اسٹاپ آئیکن دبائیں'),
-              _buildHelpPoint('⚠️', 'انگریزی حروف خود بخود حذف ہو جائیں گے'),
               const SizedBox(height: 10),
               Text(
                 'پوچھی جانے والی بیماریاں:',
@@ -1147,11 +921,11 @@ class _ChatbotState extends State<Chatbot> {
                 ),
               ),
               const SizedBox(height: 5),
-              _buildHelpPoint('•', 'پیلے دھبے - رسٹ بیماری'),
-              _buildHelpPoint('•', 'سڑنا - پاؤڈری ملڈیو'),
-              _buildHelpPoint('•', 'سیاہ دھبے - ٹیلے سنٹ'),
-              _buildHelpPoint('•', 'جھلساؤ - کیلشیئم کی کمی'),
-              _buildHelpPoint('•', 'سفوف نما تہ - پاؤڈری ملڈیو'),
+              _buildHelpPoint('•', 'زرد کنگی، بھوری کنگی'),
+              _buildHelpPoint('•', 'کالی کنگی، کانگیاری'),
+              _buildHelpPoint('•', 'سست تیلہ، تنے کی مکھی'),
+              _buildHelpPoint('•', 'سفوفی پھپھوندی، جوئیں'),
+              _buildHelpPoint('•', 'گندم کا بلاسٹ، ٹین سپاٹ'),
             ],
           ),
           actions: [
@@ -1172,20 +946,21 @@ class _ChatbotState extends State<Chatbot> {
 
   Widget _buildHelpPoint(String emoji, String text) {
     return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(
-          children: [
-            Text(emoji, style: const TextStyle(fontSize: 16)),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                text,
-                style: GoogleFonts.vazirmatn(fontSize: 14),
-                textDirection: TextDirection.rtl,
-              ),
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Text(emoji, style: const TextStyle(fontSize: 16)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              text,
+              style: GoogleFonts.vazirmatn(fontSize: 14),
+              textDirection: TextDirection.rtl,
             ),
-          ],
-        ));
+          ),
+        ],
+      ),
+    );
   }
 
   void _showTTSInstallGuide() {
@@ -1223,8 +998,7 @@ class _ChatbotState extends State<Chatbot> {
                     child: Column(
                       children: [
                         ListTile(
-                          leading:
-                              const Icon(Icons.download, color: Colors.green),
+                          leading: const Icon(Icons.download, color: Colors.green),
                           title: Text('سب سے آسان طریقہ',
                               style: GoogleFonts.vazirmatn(
                                   fontWeight: FontWeight.bold)),
@@ -1239,9 +1013,6 @@ class _ChatbotState extends State<Chatbot> {
                             backgroundColor: Colors.green,
                             foregroundColor: Colors.white,
                             minimumSize: const Size(double.infinity, 45),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -1271,26 +1042,6 @@ class _ChatbotState extends State<Chatbot> {
                 _buildInstallStep('3', '"اردو (پاکستان)" تلاش کریں'),
                 _buildInstallStep('4', 'اردو زبان ڈاؤن لوڈ کریں'),
                 _buildInstallStep('5', 'آپ کی ایپ دوبارہ شروع کریں'),
-                const SizedBox(height: 20),
-                Text(
-                  'اگر مسئلہ حل نہ ہو تو:',
-                  style: GoogleFonts.vazirmatn(
-                    color: Colors.grey[700],
-                    fontSize: 12,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                OutlinedButton.icon(
-                  onPressed: () => _openAppSettings(),
-                  icon: const Icon(Icons.settings),
-                  label: Text('سیٹنگز کھولیں', style: GoogleFonts.vazirmatn()),
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 45),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
@@ -1355,25 +1106,14 @@ class _ChatbotState extends State<Chatbot> {
 
   Future<void> _launchPlayStore(String url) async {
     try {
-      if (await canLaunch(url)) {
-        await launch(url);
-      }
+      if (await canLaunch(url)) await launch(url);
     } catch (e) {
       print("Play Store کھولنے میں خرابی: $e");
     }
   }
 
-  Future<void> _openAppSettings() async {
-    try {
-      await openAppSettings();
-    } catch (e) {
-      print("سیٹنگز کھولنے میں خرابی: $e");
-    }
-  }
-
   Future<void> _testTTS() async {
     if (!_ttsAvailable) return;
-
     final testPhrase = "آواز کی جانچ۔ اردو آواز کام کر رہی ہے۔";
     await _speak(testPhrase, null);
   }
@@ -1383,24 +1123,10 @@ class Message {
   final String text;
   final String sender;
   final DateTime timestamp;
-  final Map<String, dynamic>? structuredData;
 
   Message({
     required this.text,
     required this.sender,
     required this.timestamp,
-    this.structuredData,
   });
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is Message &&
-          runtimeType == other.runtimeType &&
-          text == other.text &&
-          sender == other.sender &&
-          timestamp == other.timestamp;
-
-  @override
-  int get hashCode => text.hashCode ^ sender.hashCode ^ timestamp.hashCode;
 }

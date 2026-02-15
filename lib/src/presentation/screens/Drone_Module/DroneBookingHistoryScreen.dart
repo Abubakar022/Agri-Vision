@@ -439,7 +439,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                                   Column(
                                     crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [
-                                      const Text('تاریخ جمع کرائی', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                                      const Text('بکنگ کی تاریخ', style: TextStyle(fontSize: 10, color: Colors.grey)),
                                       // Corrected formatDate usage
                                       Text(formatDate(order['createdAt']), style: const TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w500)),
                                     ],
