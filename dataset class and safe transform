@@ -1,0 +1,47 @@
+# ==========================================
+# 2. DATASET CLASS & SAFE TRANSFORM
+# ==========================================
+def safe_pil_to_tensor(pic):
+    """Crash se bachne ke liye safe conversion"""
+    np_img = np.array(pic, dtype=np.uint8)
+    if len(np_img.shape) == 2:
+        np_img = np.expand_dims(np_img, axis=2)
+    tensor = torch.tensor(np_img, dtype=torch.float32).permute(2, 0, 1)
+    return tensor / 255.0
+
+class WheatDiseaseDataset(Dataset):
+    def _init_(self, root_dir, subset, transform=None):
+        # Path banta hai: /kaggle/input/.../train
+        self.root_dir = os.path.join(root_dir, subset)
+        self.transform = transform
+        
+        # Classes detect karo
+        self.classes = sorted([d for d in os.listdir(self.root_dir) if os.path.isdir(os.path.join(self.root_dir, d))])
+        self.class_to_idx = {cls_name: i for i, cls_name in enumerate(self.classes)}
+        
+        self.images = []
+        self.labels = []
+
+        for cls_name in self.classes:
+            cls_folder = os.path.join(self.root_dir, cls_name)
+            for img_name in os.listdir(cls_folder):
+                if img_name.lower().endswith(('.png', '.jpg', '.jpeg')):
+                    self.images.append(os.path.join(cls_folder, img_name))
+                    self.labels.append(self.class_to_idx[cls_name])
+
+        print(f"[{subset.upper()}] Found {len(self.images)} images across {len(self.classes)} classes.")
+
+    def _len_(self):
+        return len(self.images)
+
+    def _getitem_(self, idx):
+        img_path = self.images[idx]
+        label = self.labels[idx]
+        try:
+            image = Image.open(img_path).convert('RGB')
+        except:
+            image = Image.new('RGB', (CONFIG["IMG_SIZE"], CONFIG["IMG_SIZE"]))
+        
+        if self.transform:
+            image = self.transform(image)
+        return image, torch.tensor(label, dtype=torch.long)
