@@ -1,3 +1,4 @@
+import 'package:agri_vision/src/application/services/notification_service.dart';
 import 'package:agri_vision/src/presentation/screens/Drawer_Pages/History_Screen/history_screen.dart';
 import 'package:agri_vision/src/presentation/screens/Drawer_Pages/support_screen.dart';
 import 'package:agri_vision/src/presentation/screens/Drawer_Pages/about_screen.dart';
@@ -6,11 +7,16 @@ import 'package:agri_vision/src/presentation/screens/flow/user_information.dart'
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class CustomDrawer extends StatelessWidget {
   const CustomDrawer({super.key});
 
   Future<void> _logoutUser(BuildContext context) async {
+    final NotificationService _notificationService = Get.find<NotificationService>();
+  
+  // Remove FCM token from server
+ 
     Get.dialog(
       Directionality(
         textDirection: TextDirection.rtl,
@@ -46,7 +52,15 @@ class CustomDrawer extends StatelessWidget {
     ).then((confirm) async {
       if (confirm == true) {
         Get.back(); // Close drawer
-        
+         await _notificationService.removeTokenFromServer();
+  
+  // Get SharedPreferences instance
+  final prefs = await SharedPreferences.getInstance();
+  
+  // ✅ ONLY remove session-related data, NOT history
+  await prefs.remove('userId');      // Remove user ID
+  await prefs.remove('userPhone');   // Remove user phone
+  await prefs.remove('isLoggedIn');
         // ✅ FIXED: Use UserSession.logout()
         await UserSession.logout();
         

@@ -1,9 +1,11 @@
 import 'dart:io';
+import 'package:agri_vision/src/application/services/notification_service.dart';
 import 'package:agri_vision/src/presentation/AppConstant/user_session.dart';
 import 'package:agri_vision/src/presentation/controllers/history_controller.dart';
 import 'package:agri_vision/src/presentation/screens/Navigation/app_Entry.dart';
 import 'package:agri_vision/src/presentation/screens/flow/splash_Screen.dart';
 import 'package:agri_vision/src/application/services/connectivity_service.dart'; // Add this import
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -16,7 +18,8 @@ Future<void> main() async {
 
   // ✅ Restore user session if exists
   UserSession.uid = prefs.getString('userId');
-
+await Firebase.initializeApp(); // ✅ Add this
+  Get.put(NotificationService()); 
   // ✅ Initialize controllers
   Get.put(HistoryController());
   Get.put(ConnectivityService()); // Initialize connectivity service

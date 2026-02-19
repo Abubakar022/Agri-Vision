@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:ui' as ui;
+import 'package:agri_vision/src/application/services/notification_service.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -19,7 +20,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
   bool isLoading = true;
   String? errorMessage;
   List<dynamic> allOrders = [];
-   
+  final NotificationService _notificationService = Get.find<NotificationService>();
   // 🔹 Status Constants
   static const int STATUS_PENDING = 1;        // Pending
   static const int STATUS_COMPLETED = 2;      // Completed
@@ -32,6 +33,8 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
   @override
   void initState() {
     super.initState();
+    _notificationService.resetUnread();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       fetchOrders();
     });

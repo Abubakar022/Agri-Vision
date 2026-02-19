@@ -3,7 +3,9 @@
 import 'dart:io';
 import 'dart:convert';
 import 'dart:async';
+import 'package:agri_vision/src/application/services/notification_service.dart';
 import 'package:agri_vision/src/presentation/screens/Detection_Module/resultScreen.dart';
+import 'package:agri_vision/src/presentation/screens/Drone_Module/DroneBookingHistoryScreen.dart';
 import 'package:agri_vision/src/presentation/widgets/custom_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -26,6 +28,7 @@ class _CropScanScreenState extends State<CropScanScreen> {
   bool _isLoading = false;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final HistoryController _historyController = Get.find<HistoryController>();
+  final NotificationService _notificationService = Get.find<NotificationService>();
 
   // API Configuration - Google Cloud Run
   static const String BASE_URL = "https://wheat-backend-1075549714370.us-central1.run.app";
@@ -389,26 +392,65 @@ class _CropScanScreenState extends State<CropScanScreen> {
             ),
           ),
           centerTitle: true,
-          actions: [
-            if (_selectedImage != null)
-              IconButton(
-                icon: const Icon(
-                  Icons.delete_outline,
-                  color: Colors.red,
+        actions: [
+  if (_selectedImage != null)
+    IconButton(
+      icon: const Icon(
+        Icons.delete_outline,
+        color: Colors.red,
+      ),
+      onPressed: _removeImage,
+      tooltip: 'تصویر ہٹائیں',
+    ),
+  Stack(
+    children: [
+      IconButton(
+        icon: const Icon(
+          Icons.notifications_none,
+          color: Color(0xFF02A96C),
+        ),
+        onPressed: () {
+          // Navigate to OrderHistoryPage when notification icon is tapped
+          Get.to(() => const OrderHistoryPage());
+          // Reset unread count when user opens notifications
+          _notificationService.resetUnread();
+        },
+      ),
+      Obx(() {
+        if (_notificationService.unreadCount.value > 0) {
+          return Positioned(
+            right: 8,
+            top: 8,
+            child: Container(
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(
+                color: Colors.red,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              constraints: const BoxConstraints(
+                minWidth: 16,
+                minHeight: 16,
+              ),
+              child: Text(
+                _notificationService.unreadCount.value > 9 
+                    ? '9+' 
+                    : _notificationService.unreadCount.value.toString(),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
                 ),
-                onPressed: _removeImage,
-                tooltip: 'تصویر ہٹائیں',
+                textAlign: TextAlign.center,
               ),
-            IconButton(
-              icon: const Icon(
-                Icons.notifications_none,
-                color: Color(0xFF02A96C),
-              ),
-              onPressed: () {
-                // Handle notification button press
-              },
             ),
-          ],
+          );
+        } else {
+          return const SizedBox.shrink();
+        }
+      }),
+    ],
+  ),
+],
         ),
         drawer: const CustomDrawer(),
         body: Directionality(
