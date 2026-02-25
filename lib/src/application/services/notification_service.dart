@@ -12,9 +12,9 @@ class NotificationService extends GetxController {
   NotificationService._internal();
 
   final FirebaseMessaging _fcm = FirebaseMessaging.instance;
-  final FlutterLocalNotificationsPlugin _localNotifications = 
+  final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
-  
+
   RxInt unreadCount = 0.obs;
 
   @override
@@ -40,13 +40,13 @@ class NotificationService extends GetxController {
 
   Future<void> initializeLocalNotifications() async {
     // Android settings
-    const AndroidInitializationSettings androidSettings = 
+    const AndroidInitializationSettings androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
-    
+
     // iOS settings
-    const DarwinInitializationSettings iosSettings = 
+    const DarwinInitializationSettings iosSettings =
         DarwinInitializationSettings();
-    
+
     // Combine both settings
     const InitializationSettings initSettings = InitializationSettings(
       android: androidSettings,
@@ -55,7 +55,7 @@ class NotificationService extends GetxController {
 
     // FIX 1: Initialize with CORRECT parameter name 'settings'
     await _localNotifications.initialize(
-      settings: initSettings,  // ← CORRECT: 'settings' is the parameter name
+      settings: initSettings, // ← CORRECT: 'settings' is the parameter name
       onDidReceiveNotificationResponse: (NotificationResponse response) {
         handleNotificationClick(response.payload);
       },
@@ -72,7 +72,8 @@ class NotificationService extends GetxController {
     );
 
     await _localNotifications
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(channel);
   }
 
@@ -108,7 +109,7 @@ class NotificationService extends GetxController {
   Future<void> saveTokenToServer(String token) async {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('userId');
-    
+
     if (userId != null) {
       try {
         final response = await http.post(
@@ -119,7 +120,7 @@ class NotificationService extends GetxController {
             'fcmToken': token,
           }),
         );
-        
+
         if (response.statusCode == 200) {
           print('✅ FCM token saved successfully');
         }
@@ -132,7 +133,7 @@ class NotificationService extends GetxController {
   void handleForegroundMessage(RemoteMessage message) {
     // Show local notification
     showLocalNotification(message);
-    
+
     // Increment unread count
     unreadCount.value++;
   }
@@ -140,7 +141,7 @@ class NotificationService extends GetxController {
   Future<void> showLocalNotification(RemoteMessage message) async {
     String title = message.notification?.title ?? 'نوٹیفکیشن';
     String body = message.notification?.body ?? '';
-    
+
     // Android notification details
     AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
       'order_channel',
@@ -167,14 +168,14 @@ class NotificationService extends GetxController {
     int notificationId = DateTime.now().millisecondsSinceEpoch ~/ 1000;
 
     // FIX 2: Show notification with CORRECT parameter names
-   // Locate this section in your showLocalNotification method
-await _localNotifications.show(
-  id: notificationId,                 // Add 'id:'
-  title: title,                        // Add 'title:'
-  body: body,                          // Add 'body:'
-  notificationDetails: platformDetails, // Add 'notificationDetails:'
-  payload: jsonEncode(message.data),   // This one was already named, keep it
-);
+    // Locate this section in your showLocalNotification method
+    await _localNotifications.show(
+      id: notificationId, // Add 'id:'
+      title: title, // Add 'title:'
+      body: body, // Add 'body:'
+      notificationDetails: platformDetails, // Add 'notificationDetails:'
+      payload: jsonEncode(message.data), // This one was already named, keep it
+    );
   }
 
   void handleNotificationClick(String? payload) {
@@ -195,7 +196,7 @@ await _localNotifications.show(
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('userId');
     final token = await _fcm.getToken();
-    
+
     if (userId != null && token != null) {
       try {
         await http.post(
