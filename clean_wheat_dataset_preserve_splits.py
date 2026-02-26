@@ -5,7 +5,7 @@
 	"message": "Try statement must have at least one except or finally clause",
 	"source": "Pylance",
 	"startLineNumber": 220,
-	"startColumn": 17,
+	"startColumn": 18,
 	"endLineNumber": 220,
 	"endColumn": 20,
 	"origin": "extHost1"
