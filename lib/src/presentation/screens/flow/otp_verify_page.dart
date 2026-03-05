@@ -10,6 +10,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:agri_vision/src/presentation/AppConstant/user_session.dart';
 import 'package:agri_vision/src/presentation/screens/Navigation/navigation.dart';
 import 'package:agri_vision/src/presentation/screens/flow/user_information.dart';
+import 'package:agri_vision/src/application/services/notification_service.dart'
+    as agri_notification;
 
 class OtpVerifyPage extends StatefulWidget {
   final String email;
@@ -45,7 +47,7 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
         timer.cancel();
         return;
       }
-      
+
       if (_resendCooldown > 0) {
         if (mounted && !_isDisposed) {
           setState(() => _resendCooldown--);
@@ -82,14 +84,14 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
   Future<void> _verifyOtp() async {
     if (_isDisposed || !mounted) return;
     if (_isLoading) return;
-    
+
     String otp;
     try {
       otp = _otpController.text.trim();
     } catch (e) {
       return;
     }
-    
+
     if (otp.length != 6) {
       _showSnackbar('6 ہندسوں کا OTP درج کریں', Colors.orange);
       return;
@@ -98,31 +100,44 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
     setState(() => _isLoading = true);
 
     try {
-      final url = Uri.parse('https://agri-vision-backend-1075549714370.us-central1.run.app/verify-otp');
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': widget.email, 'otp': otp}),
-      ).timeout(const Duration(seconds: 30));
+      final url = Uri.parse(
+          'https://agri-vision-backend-1075549714370.us-central1.run.app/verify-otp');
+      final response = await http
+          .post(
+            url,
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'email': widget.email, 'otp': otp}),
+          )
+          .timeout(const Duration(seconds: 30));
 
       if (_isDisposed) return;
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        
+
         if (data['status'] == 'success' || data['success'] == true) {
           // ✅ FIXED LINE HERE
-          final userId = data['user']['uId'] ?? 'user_${DateTime.now().millisecondsSinceEpoch}';
+          final userId = data['user']['uId'] ??
+              'user_${DateTime.now().millisecondsSinceEpoch}';
           await UserSession.saveLogin(userId, widget.email);
 
           // ✅ ADD THIS LINE - Mark OTP as verified
           final prefs = await SharedPreferences.getInstance();
           await prefs.setBool('otpVerified', true);
 
+          // ✅ ADD THIS LINE - Link FCM token to the new user
+          try {
+            final notificationService =
+                Get.find<agri_notification.NotificationService>();
+            await notificationService.setupFCM();
+          } catch (e) {
+            debugPrint('Failed to initialize NotificationService: $e');
+          }
+
           _showSnackbar('کامیابی سے لاگ ان ہو گئے!', const Color(0xFF02A96C));
 
           await Future.delayed(const Duration(milliseconds: 500));
-          
+
           Get.offAll(() => const HomeNavigation());
         } else {
           throw data['message'] ?? 'غلط OTP';
@@ -147,25 +162,28 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
     setState(() => _resendLoading = true);
 
     try {
-      final url = Uri.parse('https://agri-vision-backend-1075549714370.us-central1.run.app/request-otp');
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': widget.email}),
-      ).timeout(const Duration(seconds: 30));
+      final url = Uri.parse(
+          'https://agri-vision-backend-1075549714370.us-central1.run.app/request-otp');
+      final response = await http
+          .post(
+            url,
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'email': widget.email}),
+          )
+          .timeout(const Duration(seconds: 30));
 
       if (_isDisposed) return;
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        
+
         if (data['status'] == 'success' || data['success'] == true) {
           setState(() {
             _resendCooldown = 60;
             _resendLoading = false;
           });
           _startTimer();
-          
+
           _showSnackbar('نیا OTP بھیج دیا گیا ہے', const Color(0xFF02A96C));
         } else {
           throw 'دوبارہ بھیجنے میں مسئلہ';
@@ -250,7 +268,6 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
                   ),
                 ),
               ),
-
               Center(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(24),
@@ -265,7 +282,8 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
                         ),
                         child: Column(
                           children: [
-                            const Icon(Icons.lock, size: 40, color: Colors.white),
+                            const Icon(Icons.lock,
+                                size: 40, color: Colors.white),
                             const SizedBox(height: 10),
                             Text(
                               "او ٹی پی بھیجا جا رہا ہے",
@@ -287,9 +305,7 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
                           ],
                         ),
                       ),
-
                       const SizedBox(height: 30),
-
                       Directionality(
                         textDirection: TextDirection.ltr,
                         child: PinCodeTextField(
@@ -297,7 +313,7 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
                           length: 6,
                           controller: _otpController,
                           keyboardType: TextInputType.number,
-                           cursorColor: const Color(0xFF02A96C),
+                          cursorColor: const Color(0xFF02A96C),
                           textStyle: GoogleFonts.vazirmatn(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -312,7 +328,8 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
                             selectedColor: const Color(0xFF02A96C),
                           ),
                           onCompleted: (value) {
-                            Future.delayed(const Duration(milliseconds: 100), () {
+                            Future.delayed(const Duration(milliseconds: 100),
+                                () {
                               if (mounted && !_isDisposed) {
                                 _verifyOtp();
                               }
@@ -320,9 +337,7 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
                           },
                         ),
                       ),
-
                       const SizedBox(height: 20),
-
                       SizedBox(
                         width: double.infinity,
                         height: 56,
@@ -338,7 +353,8 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
                               ? const SizedBox(
                                   width: 20,
                                   height: 20,
-                                  child: CircularProgressIndicator(color: Colors.white),
+                                  child: CircularProgressIndicator(
+                                      color: Colors.white),
                                 )
                               : Text(
                                   'تصدیق کریں',
@@ -350,9 +366,7 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
                                 ),
                         ),
                       ),
-
                       const SizedBox(height: 20),
-
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -380,9 +394,7 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
                             ),
                         ],
                       ),
-
                       const SizedBox(height: 20),
-
                       TextButton.icon(
                         icon: const Icon(Icons.email, size: 18),
                         label: Text(

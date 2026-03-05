@@ -1,0 +1,17 @@
+# Dependencies and logs
+/node_modules
+npm-debug.log
+.npm
+
+# Operating System files
+.DS_Store
+Thumbs.db
+
+# Environment and Git
+.env
+.git
+.gitignore
+
+# Compiled files (Agar aap Typescript istemal karte hain)
+/dist
+/build

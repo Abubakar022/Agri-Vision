@@ -11,4 +11,8 @@ orderRouter.delete('/admin/order/:id', orderController.deleteOrder);
 orderRouter.get('/admin/order/:id/previous', orderController.getUserOrderHistory);
 orderRouter.get('/admin/orders/stats', orderController.getOrderStats);
 orderRouter.get('/totalRevenue', orderController.getTotalRevenue);
+// orderRouter.js
+orderRouter.delete('/user/order/:id/cancel/:userId', orderController.userCancelOrder);
+
+
 module.exports = orderRouter;

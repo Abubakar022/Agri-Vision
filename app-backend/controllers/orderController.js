@@ -155,5 +155,22 @@ exports.getTotalRevenue = async (req, res, next) => {
     res.status(500).json({ status: 'error', message: 'Failed to get revenue' });
   }
 };
+// ================== USER: Delete own order ==================
+exports.userCancelOrder = async (req, res) => {
+  try {
+    const { id, userId } = req.params; // URL params
 
+    await SaveOrder.userCancelOrder(id, userId);
 
+    res.json({
+      status: "success",
+      message: "Order cancelled and removed successfully"
+    });
+
+  } catch (err) {
+    res.status(400).json({
+      status: "error",
+      message: err.message
+    });
+  }
+};

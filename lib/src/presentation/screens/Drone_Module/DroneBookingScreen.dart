@@ -31,26 +31,110 @@ class _DroneBookingScreenState extends State<DroneBookingScreen> {
 
   // Urdu Districts and Tehsils of Punjab
   final Map<String, List<String>> punjabDistricts = {
-    "اٹک": ["اٹک", "فتح جنگ", "حسن ابدال", "حضرو", "جنڈ", "پنڈی گھیب", "اس میں موجود نہیں"],
-    "بہاولنگر": ["بہاولنگر", "چشتیاں", "ہارون آباد", "منچن آباد", "فورٹ عباس", "اس میں موجود نہیں"],
-    "بہاولپور": ["بہاولپور", "احمدپور شرقیہ", "حاصلپور", "خیرپور ٹامیوالی", "یزمان", "اس میں موجود نہیں"],
-    "بھکر": ["بھکر", "دریا خان", "کالور کوٹ", "منکیرہ", "دُلیوالا", "اس میں موجود نہیں"],
-    "چکوال": ["چکوال", "چوا سیداں شاہ", "کلر کہار", "تلہ گنگ", "اس میں موجود نہیں"],
+    "اٹک": [
+      "اٹک",
+      "فتح جنگ",
+      "حسن ابدال",
+      "حضرو",
+      "جنڈ",
+      "پنڈی گھیب",
+      "اس میں موجود نہیں"
+    ],
+    "بہاولنگر": [
+      "بہاولنگر",
+      "چشتیاں",
+      "ہارون آباد",
+      "منچن آباد",
+      "فورٹ عباس",
+      "اس میں موجود نہیں"
+    ],
+    "بہاولپور": [
+      "بہاولپور",
+      "احمدپور شرقیہ",
+      "حاصلپور",
+      "خیرپور ٹامیوالی",
+      "یزمان",
+      "اس میں موجود نہیں"
+    ],
+    "بھکر": [
+      "بھکر",
+      "دریا خان",
+      "کالور کوٹ",
+      "منکیرہ",
+      "دُلیوالا",
+      "اس میں موجود نہیں"
+    ],
+    "چکوال": [
+      "چکوال",
+      "چوا سیداں شاہ",
+      "کلر کہار",
+      "تلہ گنگ",
+      "اس میں موجود نہیں"
+    ],
     "چنیوٹ": ["چنیوٹ", "بھوانہ", "لالیاں", "اس میں موجود نہیں"],
-    "ڈی جی خان": ["ڈیرہ غازی خان", "تونسہ", "کوت چٹھہ", "قبائلی علاقہ", "اس میں موجود نہیں"],
-    "فیصل آباد": ["فیصل آباد", "جڑانوالہ", "تندلیانوالہ", "سمندری", "چک جھمرہ", "اس میں موجود نہیں"],
-    "گوجرانوالہ": ["گوجرانوالہ", "کاموکی", "وزیرآباد", "نوشہرہ ورکاں", "اس میں موجود نہیں"],
+    "ڈی جی خان": [
+      "ڈیرہ غازی خان",
+      "تونسہ",
+      "کوت چٹھہ",
+      "قبائلی علاقہ",
+      "اس میں موجود نہیں"
+    ],
+    "فیصل آباد": [
+      "فیصل آباد",
+      "جڑانوالہ",
+      "تندلیانوالہ",
+      "سمندری",
+      "چک جھمرہ",
+      "اس میں موجود نہیں"
+    ],
+    "گوجرانوالہ": [
+      "گوجرانوالہ",
+      "کاموکی",
+      "وزیرآباد",
+      "نوشہرہ ورکاں",
+      "اس میں موجود نہیں"
+    ],
     "گجرات": ["گجرات", "کھاریاں", "سری عالمگیر", "اس میں موجود نہیں"],
     "حافظ آباد": ["حافظ آباد", "پندی بھٹیاں", "اس میں موجود نہیں"],
-    "جھنگ": ["جھنگ", "شورکوٹ", "احمدپور سیال", "اٹھارہ ہزاری", "اس میں موجود نہیں"],
+    "جھنگ": [
+      "جھنگ",
+      "شورکوٹ",
+      "احمدپور سیال",
+      "اٹھارہ ہزاری",
+      "اس میں موجود نہیں"
+    ],
     "جہلم": ["جہلم", "دینہ", "پند دادن خان", "سوہاوہ", "اس میں موجود نہیں"],
     "قصور": ["قصور", "پتوکی", "کوٹ رادھا کشن", "چونیاں", "اس میں موجود نہیں"],
-    "خانیوال": ["خانیوال", "جہانیاں", "کبیر والا", "میان چنوں", "اس میں موجود نہیں"],
-    "خوشاب": ["خوشاب", "نورپور تھل", "قائد آباد", "نوشہرہ", "اس میں موجود نہیں"],
-    "لاہور": ["لاہور", "ماڈل ٹاؤن", "رائے ونڈ", "واہگہ", "شالیمار", "اس میں موجود نہیں"],
+    "خانیوال": [
+      "خانیوال",
+      "جہانیاں",
+      "کبیر والا",
+      "میان چنوں",
+      "اس میں موجود نہیں"
+    ],
+    "خوشاب": [
+      "خوشاب",
+      "نورپور تھل",
+      "قائد آباد",
+      "نوشہرہ",
+      "اس میں موجود نہیں"
+    ],
+    "لاہور": [
+      "لاہور",
+      "ماڈل ٹاؤن",
+      "رائے ونڈ",
+      "واہگہ",
+      "شالیمار",
+      "اس میں موجود نہیں"
+    ],
     "لیہ": ["لیہ", "چوبارہ", "کروڑ لعل عیسن", "اس میں موجود نہیں"],
     "لودھراں": ["لودھراں", "دُنیاپور", "کہروڑ پکا", "اس میں موجود نہیں"],
-    "منڈی بہاؤالدین": ["منڈی بہاؤالدین", "پھالیہ", "ملکوال", "اس میں موجود نہیں"],
+    "منڈی بہاؤالدین": [
+      "منڈی بہاؤالدین",
+      "پھالیہ",
+      "ملکوال",
+      "اس میں موجود نہیں"
+    ],
     "میانوالی": ["میانوالی", "عیسی خیل", "پپلاں", "اس میں موجود نہیں"],
     "ملتان": ["ملتان", "شجاع آباد", "جلالپور پیروالا", "اس میں موجود نہیں"],
     "مظفرگڑھ": ["مظفرگڑھ", "علی پور", "جتوئی", "کوٹ ادو", "اس میں موجود نہیں"],
@@ -58,14 +142,48 @@ class _DroneBookingScreenState extends State<DroneBookingScreen> {
     "نارووال": ["نارووال", "شکرگڑھ", "ظفر وال", "اس میں موجود نہیں"],
     "اوکاڑہ": ["اوکاڑہ", "دِیپالپور", "رینالہ خورد", "اس میں موجود نہیں"],
     "پاکپتن": ["پاکپتن", "عارف والا", "اس میں موجود نہیں"],
-    "رحیم یار خان": ["رحیم یار خان", "خانپور", "صادق آباد", "لیاقت پور", "اس میں موجود نہیں"],
+    "رحیم یار خان": [
+      "رحیم یار خان",
+      "خانپور",
+      "صادق آباد",
+      "لیاقت پور",
+      "اس میں موجود نہیں"
+    ],
     "راجن پور": ["راجن پور", "جامپور", "روجھان مزاری", "اس میں موجود نہیں"],
-    "راولپنڈی": ["راولپنڈی", "ٹیکسلا", "کہوٹہ", "کہوٹلی ستیاں", "کلر سیداں", "گوجر خان", "اس میں موجود نہیں"],
+    "راولپنڈی": [
+      "راولپنڈی",
+      "ٹیکسلا",
+      "کہوٹہ",
+      "کہوٹلی ستیاں",
+      "کلر سیداں",
+      "گوجر خان",
+      "اس میں موجود نہیں"
+    ],
     "ساہیوال": ["ساہیوال", "چیچہ وطنی", "اس میں موجود نہیں"],
-    "سرگودھا": ["سرگودھا", "بھلوال", "کوٹ مومن", "شاہ پور", "سلانوالی", "اس میں موجود نہیں"],
-    "شیخوپورہ": ["شیخوپورہ", "فیروزوالہ", "مریدکے", "صفدرآباد", "شرقپور", "اس میں موجود نہیں"],
+    "سرگودھا": [
+      "سرگودھا",
+      "بھلوال",
+      "کوٹ مومن",
+      "شاہ پور",
+      "سلانوالی",
+      "اس میں موجود نہیں"
+    ],
+    "شیخوپورہ": [
+      "شیخوپورہ",
+      "فیروزوالہ",
+      "مریدکے",
+      "صفدرآباد",
+      "شرقپور",
+      "اس میں موجود نہیں"
+    ],
     "سیالکوٹ": ["سیالکوٹ", "ڈسکہ", "پسرور", "سمبڑیال", "اس میں موجود نہیں"],
-    "ٹوبہ ٹیک سنگھ": ["ٹوبہ ٹیک سنگھ", "گوجرہ", "کمالیہ", "پیرمحل", "اس میں موجود نہیں"],
+    "ٹوبہ ٹیک سنگھ": [
+      "ٹوبہ ٹیک سنگھ",
+      "گوجرہ",
+      "کمالیہ",
+      "پیرمحل",
+      "اس میں موجود نہیں"
+    ],
     "وہاڑی": ["وہاڑی", "میلسی", "بورے والا", "اس میں موجود نہیں"],
     "اس میں موجود نہیں": ["اس میں موجود نہیں"]
   };
@@ -81,7 +199,7 @@ class _DroneBookingScreenState extends State<DroneBookingScreen> {
   void _calculatePrice(String value) {
     // Cancel any previous timer
     _debounceTimer?.cancel();
-    
+
     // Start a new timer
     _debounceTimer = Timer(const Duration(milliseconds: 100), () {
       if (mounted) {
@@ -96,7 +214,7 @@ class _DroneBookingScreenState extends State<DroneBookingScreen> {
   void _clearForm() {
     // Cancel any pending timer first
     _debounceTimer?.cancel();
-    
+
     // Clear all fields and reset price
     _formKey.currentState?.reset();
     _nameController.clear();
@@ -106,7 +224,7 @@ class _DroneBookingScreenState extends State<DroneBookingScreen> {
     _cityController.clear();
     _addressController.clear();
     _acreController.clear();
-    
+
     // Reset price immediately
     if (mounted) {
       setState(() {
@@ -146,12 +264,12 @@ class _DroneBookingScreenState extends State<DroneBookingScreen> {
 
     setState(() => _isSubmitting = true);
     try {
-      final url = Uri.parse('https://agri-node-backend-1075549714370.us-central1.run.app/order');
-      
+      final url = Uri.parse('http://10.0.2.2:5000/order');
+
       // 🔴 ONLY CHANGE HERE: Get userId from SharedPreferences instead of Firebase
       final prefs = await SharedPreferences.getInstance();
       final String uid = prefs.getString('userId') ?? '';
-      
+
       // Check if user is logged in
       if (uid.isEmpty) {
         Get.snackbar(
@@ -181,7 +299,7 @@ class _DroneBookingScreenState extends State<DroneBookingScreen> {
       }
 
       final body = {
-        "userId": uid,  // 🔴 This will be your new backend's userId
+        "userId": uid, // 🔴 This will be your new backend's userId
         "Username": _nameController.text.trim(),
         "phone": _phoneController.text.trim(),
         "district": _districtController.text.trim(),
@@ -192,11 +310,13 @@ class _DroneBookingScreenState extends State<DroneBookingScreen> {
         "price": _price,
       };
 
-      final response = await http.post(
-        url,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode(body),
-      ).timeout(const Duration(seconds: 30));
+      final response = await http
+          .post(
+            url,
+            headers: {"Content-Type": "application/json"},
+            body: jsonEncode(body),
+          )
+          .timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         Get.snackbar(
@@ -221,23 +341,24 @@ class _DroneBookingScreenState extends State<DroneBookingScreen> {
             ),
           ),
         );
-        
+
         // Clear the form immediately after successful submission
         _clearForm();
-        
+
         // Navigate to confirmation screen
         Get.to(() => const OrderFinalPage());
       } else {
         String errorMessage = "سرور کی جانب سے مسئلہ پیش آیا۔";
-        
+
         if (response.statusCode >= 500) {
-          errorMessage = "سرور پر مسئلہ پیش آیا ہے۔ براہ کرم بعد میں کوشش کریں۔";
+          errorMessage =
+              "سرور پر مسئلہ پیش آیا ہے۔ براہ کرم بعد میں کوشش کریں۔";
         } else if (response.statusCode == 404) {
           errorMessage = "خدمت دستیاب نہیں ہے۔";
         } else if (response.statusCode == 401 || response.statusCode == 403) {
           errorMessage = "آپ اس عمل کو انجام دینے کے مجاز نہیں ہیں۔";
         }
-        
+
         Get.snackbar(
           "غلطی",
           errorMessage,
@@ -368,18 +489,30 @@ class _DroneBookingScreenState extends State<DroneBookingScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          _buildTextFormField(hint: "نام", controller: _nameController, validator: (v) => v!.isEmpty ? "نام درکار ہے" : null),
-                          _buildTextFormField(hint: "فون نمبر", controller: _phoneController, keyboardType: TextInputType.phone, validator: (v) {
-                            if (v == null || v.trim().isEmpty) return 'فون نمبر درکار ہے';
-                            final reg = RegExp(r'^03[0-9]{9}$');
-                            if (!reg.hasMatch(v)) return 'فون نمبر 11 ہندسوں کا ہونا چاہیے';
-                            return null;
-                          }),
+                          _buildTextFormField(
+                              hint: "نام",
+                              controller: _nameController,
+                              validator: (v) =>
+                                  v!.isEmpty ? "نام درکار ہے" : null),
+                          _buildTextFormField(
+                              hint: "فون نمبر",
+                              controller: _phoneController,
+                              keyboardType: TextInputType.phone,
+                              validator: (v) {
+                                if (v == null || v.trim().isEmpty)
+                                  return 'فون نمبر درکار ہے';
+                                final reg = RegExp(r'^03[0-9]{9}$');
+                                if (!reg.hasMatch(v))
+                                  return 'فون نمبر 11 ہندسوں کا ہونا چاہیے';
+                                return null;
+                              }),
                           _buildDropdownField(
                             label: "ضلع",
                             controller: _districtController,
                             items: districts,
-                            validator: (v) => v == null || v.isEmpty ? 'ضلع منتخب کریں' : null,
+                            validator: (v) => v == null || v.isEmpty
+                                ? 'ضلع منتخب کریں'
+                                : null,
                             onChanged: (value) {
                               WidgetsBinding.instance.addPostFrameCallback((_) {
                                 setState(() {
@@ -395,26 +528,43 @@ class _DroneBookingScreenState extends State<DroneBookingScreen> {
                             label: "تحصیل",
                             controller: _tehsilController,
                             items: tehsils,
-                            validator: (v) => v == null || v.isEmpty ? 'تحصیل منتخب کریں' : null,
+                            validator: (v) => v == null || v.isEmpty
+                                ? 'تحصیل منتخب کریں'
+                                : null,
                           ),
-                          _buildTextFormField(hint: "شہر", controller: _cityController, validator: (v) => v!.isEmpty ? "شہر درکار ہے" : null),
-                          _buildTextFormField(hint: "پتہ", controller: _addressController, maxLines: 2, validator: (v) => v!.isEmpty ? "پتہ درکار ہے" : null),
+                          _buildTextFormField(
+                              hint: "شہر",
+                              controller: _cityController,
+                              validator: (v) =>
+                                  v!.isEmpty ? "شہر درکار ہے" : null),
+                          _buildTextFormField(
+                              hint: "پتہ",
+                              controller: _addressController,
+                              maxLines: 2,
+                              validator: (v) =>
+                                  v!.isEmpty ? "پتہ درکار ہے" : null),
                           _buildTextFormField(
                             hint: "رقبہ (ایکرز میں)",
                             controller: _acreController,
                             keyboardType: TextInputType.number,
                             validator: (v) {
-                              if (v == null || v.isEmpty) return "رقبہ درج کریں";
+                              if (v == null || v.isEmpty)
+                                return "رقبہ درج کریں";
                               final acres = double.tryParse(v);
-                              if (acres == null || acres <= 0) return "درست رقبہ درج کریں";
+                              if (acres == null || acres <= 0)
+                                return "درست رقبہ درج کریں";
                               return null;
                             },
                             onChanged: _calculatePrice,
                           ),
                           Align(
                             alignment: Alignment.centerRight,
-                            child: Text("کل قیمت: ${_price.toStringAsFixed(0)} روپے",
-                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _green)),
+                            child: Text(
+                                "کل قیمت: ${_price.toStringAsFixed(0)} روپے",
+                                style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: _green)),
                           ),
                           const SizedBox(height: 24),
                           SizedBox(
@@ -422,21 +572,30 @@ class _DroneBookingScreenState extends State<DroneBookingScreen> {
                             child: ElevatedButton.icon(
                               onPressed: _isSubmitting ? null : submitOrder,
                               icon: _isSubmitting
-                                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2.2, color: Colors.white))
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                          strokeWidth: 2.2,
+                                          color: Colors.white))
                                   : const Icon(Icons.air, color: Colors.white),
                               label: Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 12),
                                 child: Text(
-                                _isSubmitting 
-    ? "درخواست جمع ہو رہی ہے..." 
-    : "بکنگ جمع کریں"
-,
-                                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                                  _isSubmitting
+                                      ? "درخواست جمع ہو رہی ہے..."
+                                      : "بکنگ جمع کریں",
+                                  style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white),
                                 ),
                               ),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: _green,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16)),
                               ),
                             ),
                           ),
@@ -475,7 +634,7 @@ class _DroneBookingScreenState extends State<DroneBookingScreen> {
               });
               return;
             }
-            
+
             // For number fields, always show cursor on right side
             if (keyboardType == TextInputType.number) {
               setInnerState(() {
@@ -485,10 +644,11 @@ class _DroneBookingScreenState extends State<DroneBookingScreen> {
               // For other fields, detect language
               final isUrdu = RegExp(r'[\u0600-\u06FF]').hasMatch(text);
               setInnerState(() {
-                currentDirection = isUrdu ? TextDirection.rtl : TextDirection.ltr;
+                currentDirection =
+                    isUrdu ? TextDirection.rtl : TextDirection.ltr;
               });
             }
-            
+
             if (onChanged != null) onChanged(text);
           }
 
@@ -499,7 +659,9 @@ class _DroneBookingScreenState extends State<DroneBookingScreen> {
 
           return TextFormField(
             controller: controller,
-            textAlign: currentDirection == TextDirection.rtl ? TextAlign.right : TextAlign.left,
+            textAlign: currentDirection == TextDirection.rtl
+                ? TextAlign.right
+                : TextAlign.left,
             textDirection: currentDirection,
             keyboardType: keyboardType,
             maxLines: maxLines,
@@ -507,8 +669,11 @@ class _DroneBookingScreenState extends State<DroneBookingScreen> {
             decoration: InputDecoration(
               hintText: hint,
               hintTextDirection: TextDirection.rtl,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: _green, width: 2.0)),
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: _green, width: 2.0)),
             ),
             validator: validator,
             onChanged: _updateDirection,
@@ -525,9 +690,10 @@ class _DroneBookingScreenState extends State<DroneBookingScreen> {
     String? Function(String?)? validator,
     Function(String?)? onChanged,
   }) {
-    final currentValue = controller.text.isEmpty || !items.contains(controller.text)
-        ? null
-        : controller.text;
+    final currentValue =
+        controller.text.isEmpty || !items.contains(controller.text)
+            ? null
+            : controller.text;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: DropdownButtonFormField<String>(
@@ -537,7 +703,11 @@ class _DroneBookingScreenState extends State<DroneBookingScreen> {
           hintTextDirection: TextDirection.rtl,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         ),
-        items: items.map((e) => DropdownMenuItem(value: e, child: Align(alignment: Alignment.centerRight, child: Text(e)))).toList(),
+        items: items
+            .map((e) => DropdownMenuItem(
+                value: e,
+                child: Align(alignment: Alignment.centerRight, child: Text(e))))
+            .toList(),
         onChanged: (value) {
           controller.text = value ?? '';
           if (onChanged != null) onChanged(value);

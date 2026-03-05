@@ -13,10 +13,11 @@ class CustomDrawer extends StatelessWidget {
   const CustomDrawer({super.key});
 
   Future<void> _logoutUser(BuildContext context) async {
-    final NotificationService _notificationService = Get.find<NotificationService>();
-  
-  // Remove FCM token from server
- 
+    final NotificationService _notificationService =
+        Get.find<NotificationService>();
+
+    // Remove FCM token from server
+
     Get.dialog(
       Directionality(
         textDirection: TextDirection.rtl,
@@ -52,18 +53,17 @@ class CustomDrawer extends StatelessWidget {
     ).then((confirm) async {
       if (confirm == true) {
         Get.back(); // Close drawer
-         await _notificationService.removeTokenFromServer();
-  
-  // Get SharedPreferences instance
-  final prefs = await SharedPreferences.getInstance();
-  
-  // ✅ ONLY remove session-related data, NOT history
-  await prefs.remove('userId');      // Remove user ID
-  await prefs.remove('userPhone');   // Remove user phone
-  await prefs.remove('isLoggedIn');
+
+        // Get SharedPreferences instance
+        final prefs = await SharedPreferences.getInstance();
+
+        // ✅ ONLY remove session-related data, NOT history
+        await prefs.remove('userId'); // Remove user ID
+        await prefs.remove('userPhone'); // Remove user phone
+        await prefs.remove('isLoggedIn');
         // ✅ FIXED: Use UserSession.logout()
         await UserSession.logout();
-        
+
         Get.showSnackbar(
           GetSnackBar(
             messageText: Directionality(
@@ -82,7 +82,7 @@ class CustomDrawer extends StatelessWidget {
             snackPosition: SnackPosition.TOP,
           ),
         );
-        
+
         await Future.delayed(const Duration(milliseconds: 500));
         Get.offAll(() => const UserInformation());
       }
@@ -130,16 +130,14 @@ class CustomDrawer extends StatelessWidget {
                 ],
               ),
             ),
-
             _DrawerItem(
               icon: Icons.history,
               title: "سکین ہسٹری",
               onTap: () {
                 Get.back();
-                Get.to(() =>  HistoryScreen());
+                Get.to(() => HistoryScreen());
               },
             ),
-
             _DrawerItem(
               icon: Icons.help_outline,
               title: "مدد اور سپورٹ",
@@ -148,7 +146,6 @@ class CustomDrawer extends StatelessWidget {
                 Get.to(() => const SupportScreen());
               },
             ),
-
             _DrawerItem(
               icon: Icons.info_outline,
               title: "ایپ کے بارے میں",
@@ -157,7 +154,6 @@ class CustomDrawer extends StatelessWidget {
                 Get.to(() => const AboutScreen());
               },
             ),
-
             const SizedBox(height: 20),
             ListTile(
               leading: const Icon(Icons.logout, color: Colors.red, size: 24),
@@ -170,13 +166,13 @@ class CustomDrawer extends StatelessWidget {
                 ),
               ),
               onTap: () => _logoutUser(context),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 25, vertical: 8),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 25, vertical: 8),
             ),
-
             const SizedBox(height: 20),
-            const Divider(color: Color(0xFF02A96C), height: 1, indent: 20, endIndent: 20),
+            const Divider(
+                color: Color(0xFF02A96C), height: 1, indent: 20, endIndent: 20),
             const SizedBox(height: 20),
-
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Text(

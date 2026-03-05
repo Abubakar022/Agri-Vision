@@ -1,1 +1,3 @@
 .env
+# Firebase service account
+config/firebase-service-account.json

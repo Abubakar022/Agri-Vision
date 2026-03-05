@@ -6,6 +6,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 
+// 🔥 CRITICAL FIX: Background handler MUST be a top-level function
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  print("Handling a background message: ${message.messageId}");
+  // No need to call showLocalNotification here;
+  // FCM shows it automatically if the 'notification' block is present.
+}
+
 class NotificationService extends GetxController {
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
@@ -34,72 +42,72 @@ class NotificationService extends GetxController {
       alert: true,
       badge: true,
       sound: true,
+      provisional: false,
     );
     print('User granted permission: ${settings.authorizationStatus}');
   }
 
   Future<void> initializeLocalNotifications() async {
-    // Android settings
     const AndroidInitializationSettings androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    // iOS settings
     const DarwinInitializationSettings iosSettings =
         DarwinInitializationSettings();
 
-    // Combine both settings
     const InitializationSettings initSettings = InitializationSettings(
       android: androidSettings,
       iOS: iosSettings,
     );
 
-    // FIX 1: Initialize with CORRECT parameter name 'settings'
     await _localNotifications.initialize(
-      settings: initSettings, // ← CORRECT: 'settings' is the parameter name
+      settings: initSettings, // Added 'settings:'
       onDidReceiveNotificationResponse: (NotificationResponse response) {
         handleNotificationClick(response.payload);
       },
     );
 
-    // Create notification channel for Android
-    AndroidNotificationChannel channel = AndroidNotificationChannel(
-      'order_channel', // id
-      'آرڈر نوٹیفکیشنز', // name
+    // 🔥 CHANNEL SYNC: ID must be 'order_channel'
+    const AndroidNotificationChannel channel = AndroidNotificationChannel(
+      'order_channel',
+      'آرڈر نوٹیفکیشنز',
       description: 'آرڈر کی حیثیت تبدیل ہونے پر اطلاعات',
-      importance: Importance.high,
+      importance: Importance.max, // MAX importance for pop-up
       playSound: true,
       enableVibration: true,
     );
 
     await _localNotifications
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
+          AndroidFlutterLocalNotificationsPlugin
+        >()
         ?.createNotificationChannel(channel);
   }
 
   Future<void> setupFCM() async {
-    // Get FCM token
+    // Background message handler registration
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
     String? token = await _fcm.getToken();
     if (token != null) {
       await saveTokenToServer(token);
     }
 
-    // Listen to token refresh
     _fcm.onTokenRefresh.listen((newToken) {
       saveTokenToServer(newToken);
     });
 
-    // Handle foreground messages
+    // Foreground listener
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      print("🔔 Foreground message received: ${message.notification?.title}");
       handleForegroundMessage(message);
     });
 
-    // Handle when app is opened from background
+    // Background click listener
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       handleNotificationClick(jsonEncode(message.data));
     });
 
-    // Handle when app is opened from terminated state
+    // Terminated state click listener
     RemoteMessage? initialMessage = await _fcm.getInitialMessage();
     if (initialMessage != null) {
       handleNotificationClick(jsonEncode(initialMessage.data));
@@ -112,18 +120,19 @@ class NotificationService extends GetxController {
 
     if (userId != null) {
       try {
-        final response = await http.post(
-          Uri.parse('http://10.0.2.2:5000/save-fcm-token'),
+        await http.post(
+          Uri.parse(
+            'https://agri-vision-backend-1075549714370.us-central1.run.app/save-fcm-token',
+          ),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({
             'userId': userId,
             'fcmToken': token,
+            'role': 'user', // Explicitly setting user role
+            'deviceType': 'android', // Fixed the iOS default issue
           }),
         );
-
-        if (response.statusCode == 200) {
-          print('✅ FCM token saved successfully');
-        }
+        print('✅ FCM token saved successfully');
       } catch (e) {
         print('Error saving FCM token: $e');
       }
@@ -131,10 +140,7 @@ class NotificationService extends GetxController {
   }
 
   void handleForegroundMessage(RemoteMessage message) {
-    // Show local notification
     showLocalNotification(message);
-
-    // Increment unread count
     unreadCount.value++;
   }
 
@@ -142,39 +148,31 @@ class NotificationService extends GetxController {
     String title = message.notification?.title ?? 'نوٹیفکیشن';
     String body = message.notification?.body ?? '';
 
-    // Android notification details
-    AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      'order_channel',
-      'آرڈر نوٹیفکیشنز',
-      channelDescription: 'آرڈر کی حیثیت تبدیل ہونے پر اطلاعات',
-      importance: Importance.high,
-      priority: Priority.high,
-      icon: '@mipmap/ic_launcher',
-      color: const Color(0xFF02A96C),
-      playSound: true,
-      enableVibration: true,
-    );
+    AndroidNotificationDetails androidDetails =
+        const AndroidNotificationDetails(
+          'order_channel', // MUST MATCH channel ID above
+          'آرڈر نوٹیفکیشنز',
+          channelDescription: 'آرڈر کی حیثیت تبدیل ہونے پر اطلاعات',
+          importance: Importance.max,
+          priority: Priority.high,
+          icon: '@mipmap/ic_launcher',
+          color: Color(0xFF02A96C),
+          playSound: true,
+        );
 
-    // iOS notification details
-    DarwinNotificationDetails iosDetails = DarwinNotificationDetails();
-
-    // Combine both platforms
     NotificationDetails platformDetails = NotificationDetails(
       android: androidDetails,
-      iOS: iosDetails,
+      iOS: const DarwinNotificationDetails(),
     );
 
-    // Generate unique ID for notification
     int notificationId = DateTime.now().millisecondsSinceEpoch ~/ 1000;
 
-    // FIX 2: Show notification with CORRECT parameter names
-    // Locate this section in your showLocalNotification method
     await _localNotifications.show(
-      id: notificationId, // Add 'id:'
-      title: title, // Add 'title:'
-      body: body, // Add 'body:'
-      notificationDetails: platformDetails, // Add 'notificationDetails:'
-      payload: jsonEncode(message.data), // This one was already named, keep it
+      id: DateTime.now().millisecond,
+      title: message.notification?.title ?? 'New Notification',
+      body: message.notification?.body ?? '',
+      notificationDetails: platformDetails,
+      payload: jsonEncode(message.data),
     );
   }
 
@@ -183,7 +181,6 @@ class NotificationService extends GetxController {
       try {
         final data = jsonDecode(payload);
         if (data['type'] == 'order_status' || data['type'] == 'order_created') {
-          // Navigate to order history
           Get.toNamed('/order-history');
         }
       } catch (e) {
@@ -192,35 +189,5 @@ class NotificationService extends GetxController {
     }
   }
 
-  Future<void> removeTokenFromServer() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
-    final token = await _fcm.getToken();
-
-    if (userId != null && token != null) {
-      try {
-        await http.post(
-          Uri.parse('http://10.0.2.2:5000/remove-fcm-token'),
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({
-            'userId': userId,
-            'fcmToken': token,
-          }),
-        );
-        print('✅ FCM token removed successfully');
-      } catch (e) {
-        print('Error removing token: $e');
-      }
-    }
-  }
-
-  void decrementUnread() {
-    if (unreadCount.value > 0) {
-      unreadCount.value--;
-    }
-  }
-
-  void resetUnread() {
-    unreadCount.value = 0;
-  }
+  void resetUnread() => unreadCount.value = 0;
 }
