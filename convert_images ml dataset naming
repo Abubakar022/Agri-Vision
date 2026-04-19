@@ -1,0 +1,44 @@
+from PIL import Image
+import os
+
+# Base folder
+base_path = r"C:\Users\lenovo t480s\Desktop\wheat diseases"
+
+# Folder names and their prefix names
+folders = {
+    "brown rust": "brown_rust",
+    "FHB": "fhb",
+    "leaf blight": "leaf_blight",
+    "Mildew": "mildew",
+    "mite": "mite",
+    "yellow rust": "yellow_rust"
+}
+
+for folder_name, prefix in folders.items():
+    input_folder = os.path.join(base_path, folder_name)
+    counter = 1
+
+    print(f"\nProcessing folder: {folder_name}")
+
+    for filename in os.listdir(input_folder):
+        if filename.lower().endswith((".jpg", ".jpeg", ".bmp", ".gif", ".tiff", ".webp", ".png")):
+            input_path = os.path.join(input_folder, filename)
+
+            # Generate unique filename (no overwrite)
+            while True:
+                output_filename = f"{prefix}_{counter}.png"
+                output_path = os.path.join(input_folder, output_filename)
+
+                if not os.path.exists(output_path):
+                    break
+                counter += 1
+
+            try:
+                with Image.open(input_path) as img:
+                    img.convert("RGBA").save(output_path, "PNG")
+                print(f"Converted: {filename} → {output_filename}")
+                counter += 1
+            except Exception as e:
+                print(f"Error converting {filename}: {e}")
+
+print("\n All folders converted safely without deleting or overwriting!")

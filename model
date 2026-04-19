@@ -1,0 +1,24 @@
+CFG = {
+    "seed": 42,
+
+    # ✅ Your dataset root path
+    "root_dir": "/kaggle/input/datasets/muhammaduzair09/wheat-disease-dataset-final",
+
+    "model_name": "swin_base_patch4_window7_224",  # if OOM -> "swin_small_patch4_window7_224"
+    "img_size": 224,
+
+    "epochs": 12,
+    "batch_size": 32,      # if OOM -> 16 or 8
+    "lr": 3e-4,
+    "weight_decay": 0.05,
+
+    "valid_size": 0.2,
+    "num_workers": 2,
+
+    "use_weighted_sampler": True,
+    "label_smoothing": 0.1,
+    "early_stop_patience": 3,
+
+    "device": "cuda" if torch.cuda.is_available() else "cpu",
+}
+print("Device:", CFG["device"])

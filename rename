@@ -1,0 +1,91 @@
+import argparse
+import re
+import uuid
+from pathlib import Path
+
+IMG_EXTS = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}
+
+def is_image(p: Path) -> bool:
+    return p.is_file() and p.suffix.lower() in IMG_EXTS
+
+def slugify(name: str) -> str:
+    # make safe filename: "brown rust" -> "brown_rust"
+    name = name.strip().lower()
+    name = re.sub(r"\s+", "_", name)
+    name = re.sub(r"[^a-z0-9_\-]+", "", name)
+    return name or "class"
+
+def rename_class_images(cls_dir: Path, start: int, dry_run: bool):
+    cls_slug = slugify(cls_dir.name)
+
+    images = sorted([p for p in cls_dir.iterdir() if is_image(p)], key=lambda x: x.name.lower())
+    if not images:
+        print(f"⚠ No images in: {cls_dir.name}")
+        return
+
+    # Step 1: rename everything to temporary unique names to avoid collisions
+    temp_map = {}
+    for p in images:
+        tmp_name = f"__tmp__{uuid.uuid4().hex}{p.suffix.lower()}"
+        tmp_path = cls_dir / tmp_name
+        temp_map[tmp_path] = p  # reverse map for log
+        if dry_run:
+            print(f"[DRY] TEMP  {p.name} -> {tmp_name}")
+        else:
+            p.rename(tmp_path)
+
+    # Step 2: final rename with numbering (1000+)
+    # refresh list of temp files in this class (only our temp files)
+    temp_files = sorted([p for p in cls_dir.iterdir() if p.name.startswith("__tmp__") and is_image(p)],
+                        key=lambda x: x.name.lower())
+
+    used = set(p.name.lower() for p in cls_dir.iterdir() if p.is_file())  # current names in folder
+
+    idx = start
+    for tmp in temp_files:
+        ext = tmp.suffix.lower()
+        while True:
+            new_name = f"{cls_slug}_{idx}{ext}"
+            if new_name.lower() not in used and not (cls_dir / new_name).exists():
+                break
+            idx += 1
+
+        if dry_run:
+            orig_name = temp_map.get(tmp, tmp).name
+            print(f"[DRY] FINAL {orig_name} -> {new_name}")
+        else:
+            tmp.rename(cls_dir / new_name)
+
+        used.add(new_name.lower())
+        idx += 1
+
+    print(f"✅ Renamed {len(images)} images in '{cls_dir.name}' starting from {start}")
+
+def main():
+    ap = argparse.ArgumentParser(description="Rename images inside each class folder to unique numbered names starting from 1000.")
+    ap.add_argument("dataset", help="Dataset root path (contains class subfolders)")
+    ap.add_argument("--start", type=int, default=1000, help="Starting number per class (default 1000)")
+    ap.add_argument("--dry_run", action="store_true", help="Preview renames without changing files")
+    args = ap.parse_args()
+
+    root = Path(args.dataset).expanduser().resolve()
+    if not root.exists() or not root.is_dir():
+        raise SystemExit(f"ERROR: Dataset folder not found: {root}")
+
+    class_dirs = sorted([d for d in root.iterdir() if d.is_dir() and not d.name.startswith(".")],
+                        key=lambda x: x.name.lower())
+    if not class_dirs:
+        raise SystemExit("ERROR: No class folders found inside dataset root.")
+
+    print("📁 Dataset:", root)
+    print("🔢 Start numbering per class:", args.start)
+    if args.dry_run:
+        print("🧪 DRY RUN mode (no files will be changed)\n")
+
+    for cls_dir in class_dirs:
+        rename_class_images(cls_dir, start=args.start, dry_run=args.dry_run)
+
+    print("\n✅ DONE")
+
+if __name__ == "__main__":
+    main()

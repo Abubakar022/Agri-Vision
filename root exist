@@ -1,0 +1,27 @@
+import os
+from pathlib import Path
+
+ROOT = Path("/kaggle/input/datasets/muhammaduzair09/wheat-disease-dataset-final")
+
+def show_tree(root, max_depth=4, max_items=200):
+    root = Path(root)
+    print("ROOT exists:", root.exists(), "\nROOT:", root)
+    count = 0
+    for p in sorted(root.rglob("*")):
+        if count >= max_items:
+            print(f"... (stopped after {max_items} items)")
+            break
+        try:
+            rel = p.relative_to(root)
+        except:
+            rel = p
+        depth = len(rel.parts)
+        if depth <= max_depth:
+            prefix = "  " * (depth - 1)
+            if p.is_dir():
+                print(f"{prefix}📁 {rel}")
+            else:
+                print(f"{prefix}📄 {rel}")
+            count += 1
+
+show_tree(ROOT, max_depth=5, max_items=300)

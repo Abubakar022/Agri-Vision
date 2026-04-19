@@ -1,0 +1,29 @@
+def list_subdirs(path):
+    if not os.path.isdir(path):
+        return []
+    return [d for d in os.listdir(path) if os.path.isdir(os.path.join(path, d))]
+
+def looks_like_class_folders(path):
+    # returns True if inside path there are subfolders and those subfolders contain images
+    subs = list_subdirs(path)
+    if len(subs) < 2:
+        return False
+    # check a few folders for image files
+    exts = (".jpg",".jpeg",".png",".bmp",".webp")
+    for d in subs[:5]:
+        files = glob(os.path.join(path, d, "*"))
+        if any(f.lower().endswith(exts) for f in files):
+            return True
+    return False
+
+ROOT = CFG["root_dir"]
+assert os.path.isdir(ROOT), f"Root not found: {ROOT}"
+
+# Priority: ROOT/train -> ROOT/Train -> ROOT/training -> else ROOT itself
+candidates = [
+    os.path.join(ROOT, "train"),
+    os.path.join(ROOT, "Train"),
+    os.path.join(ROOT, "training"),
+    os.path.join(ROOT, "Training"),
+    ROOT
+]

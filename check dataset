@@ -1,0 +1,2 @@
+print("Dataset exists:", os.path.exists(DATASET_DIR))
+print("Folders:", os.listdir(DATASET_DIR)[:20])

@@ -1,0 +1,14 @@
+# =========================
+# CONFIG
+# =========================
+DATASET_DIR = "/kaggle/input/datasets/muhammaduzair09/wheat-disease-dataset-final"
+
+IMG_SIZE = (300, 300)     # EfficientNetV2B3 ke liye acha size
+BATCH_SIZE = 32
+SEED = 42
+
+INITIAL_EPOCHS = 15
+FINE_TUNE_EPOCHS = 15
+TOTAL_EPOCHS = INITIAL_EPOCHS + FINE_TUNE_EPOCHS
+
+AUTOTUNE = tf.data.AUTOTUNE

@@ -1,0 +1,270 @@
+
+# Works for folder dataset:
+#   input/
+#     classA/*.jpg
+#     classB/*.jpg
+#
+# Output:
+#   output_balanced/
+#     classA/*.jpg
+#     classB/*.jpg
+#
+# Run (Windows example):
+#   python balance_dedup.py --input "C:\Users\lenovo t480s\Desktop\wheat diseases" --out "C:\Users\lenovo t480s\Desktop\wheat_balanced" --dedup_threshold 6 --balance_mode min
+#
+# Notes:
+# - dedup_threshold: 4 = strict, 6 = normal, 8 = loose
+# - balance_mode:
+#     min  => all classes become equal to smallest class (NO heavy augmentation)
+#     max  => all classes become equal to largest class (will augment a lot)
+
+import os, math, json, argparse, random, shutil
+from pathlib import Path
+from collections import defaultdict
+from PIL import Image, ImageEnhance, ImageFilter, ImageOps
+
+IMG_EXTS = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}
+
+def is_image(p: Path) -> bool:
+    return p.suffix.lower() in IMG_EXTS
+
+def safe_mkdir(p: Path):
+    p.mkdir(parents=True, exist_ok=True)
+
+def list_classes(root: Path):
+    classes = [d for d in root.iterdir() if d.is_dir() and not d.name.startswith(".")]
+    classes.sort(key=lambda x: x.name.lower())
+    return classes
+
+def list_images(folder: Path):
+    imgs = [p for p in folder.iterdir() if p.is_file() and is_image(p)]
+    imgs.sort(key=lambda x: x.name.lower())
+    return imgs
+
+# ---------------- pHash (no external deps) ----------------
+def phash(img: Image.Image, hash_size=8, highfreq_factor=4) -> int:
+    import numpy as np
+    img = img.convert("L")
+    size = hash_size * highfreq_factor
+    img = img.resize((size, size), Image.Resampling.LANCZOS)
+    x = np.asarray(img, dtype=np.float32)
+
+    N = size
+    n = np.arange(N)
+    k = n.reshape((N, 1))
+    dct_mat = np.cos((math.pi / N) * (n + 0.5) * k)
+    dct_mat[0, :] *= 1.0 / math.sqrt(2)
+    dct_mat *= math.sqrt(2 / N)
+    dct = dct_mat @ x @ dct_mat.T
+
+    d = dct[:hash_size, :hash_size].flatten()
+    med = float(np.median(d[1:]))  # exclude DC
+    bits = (dct[:hash_size, :hash_size] > med).flatten()
+
+    h = 0
+    for b in bits:
+        h = (h << 1) | int(bool(b))
+    return int(h)
+
+def hamming(a: int, b: int) -> int:
+    return (a ^ b).bit_count()
+
+def remove_duplicates_in_class(cls_dir: Path, threshold: int):
+    imgs = list_images(cls_dir)
+    hashes = []
+    removed = 0
+    kept = 0
+
+    for p in imgs:
+        try:
+            img = Image.open(p)
+            h = phash(img)
+        except Exception:
+            # unreadable => remove
+            try: p.unlink()
+            except: pass
+            removed += 1
+            continue
+
+        dup = False
+        for prev_h in hashes:
+            if hamming(h, prev_h) <= threshold:
+                dup = True
+                break
+
+        if dup:
+            try: p.unlink()
+            except: pass
+            removed += 1
+        else:
+            hashes.append(h)
+            kept += 1
+
+    return kept, removed
+
+def dedup_dataset(root: Path, threshold: int):
+    stats = {}
+    for cls_dir in list_classes(root):
+        kept, removed = remove_duplicates_in_class(cls_dir, threshold)
+        stats[cls_dir.name] = {"kept": kept, "removed": removed}
+    return stats
+
+# ---------------- Simple augmentation (for balancing) ----------------
+def augment_pil(img: Image.Image) -> Image.Image:
+    img = img.convert("RGB")
+
+    if random.random() < 0.5:
+        img = ImageOps.mirror(img)
+
+    if random.random() < 0.6:
+        angle = random.uniform(-12, 12)
+        img = img.rotate(angle, resample=Image.Resampling.BICUBIC, expand=True)
+
+    if random.random() < 0.8:
+        img = ImageEnhance.Brightness(img).enhance(random.uniform(0.8, 1.25))
+        img = ImageEnhance.Contrast(img).enhance(random.uniform(0.8, 1.25))
+        img = ImageEnhance.Color(img).enhance(random.uniform(0.8, 1.25))
+
+    if random.random() < 0.15:
+        img = img.filter(ImageFilter.GaussianBlur(radius=random.uniform(0.2, 1.0)))
+
+    return img
+
+def balance_dataset(root: Path, target_per_class: int, trim_extra: bool = True, copies_cap_per_image: int = 10):
+    """
+    Make each class exactly target_per_class images:
+    - if > target: delete random extra (if trim_extra=True)
+    - if < target: create augmented images until target
+    """
+    stats = {"target_per_class": target_per_class, "trimmed": {}, "augmented": {}}
+
+    for cls_dir in list_classes(root):
+        imgs = list_images(cls_dir)
+        cur = len(imgs)
+
+        # trim if too many
+        if trim_extra and cur > target_per_class:
+            random.shuffle(imgs)
+            to_remove = imgs[target_per_class:]
+            for p in to_remove:
+                try: p.unlink()
+                except: pass
+            stats["trimmed"][cls_dir.name] = len(to_remove)
+
+        # refresh
+        imgs = list_images(cls_dir)
+        cur = len(imgs)
+
+        # augment if too few
+        if cur < target_per_class and cur > 0:
+            per_src = defaultdict(int)
+            created = 0
+            while cur < target_per_class:
+                src = random.choice(imgs)
+                if per_src[str(src)] >= copies_cap_per_image:
+                    continue
+
+                try:
+                    im = Image.open(src)
+                except Exception:
+                    continue
+
+                aug = augment_pil(im)
+                out_name = f"{src.stem}__aug_{per_src[str(src)]:03d}{src.suffix.lower()}"
+                out_path = cls_dir / out_name
+                if out_path.exists():
+                    per_src[str(src)] += 1
+                    continue
+
+                aug.save(out_path, quality=95)
+                per_src[str(src)] += 1
+                created += 1
+                cur += 1
+
+            stats["augmented"][cls_dir.name] = created
+        elif cur == 0:
+            stats["augmented"][cls_dir.name] = 0
+
+    return stats
+
+def copy_input_to_out(input_dir: Path, out_dir: Path):
+    """
+    Copy dataset (class folders) to out_dir so original stays safe.
+    """
+    if out_dir.exists():
+        # Avoid accidental overwrite
+        raise SystemExit(f"ERROR: Output folder already exists: {out_dir}\nDelete it or choose another --out path.")
+
+    safe_mkdir(out_dir)
+    for cls_dir in list_classes(input_dir):
+        dst_cls = out_dir / cls_dir.name
+        safe_mkdir(dst_cls)
+        for img in list_images(cls_dir):
+            shutil.copy2(img, dst_cls / img.name)
+
+def count_per_class(root: Path):
+    return {cls_dir.name: len(list_images(cls_dir)) for cls_dir in list_classes(root)}
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--input", required=True, help="Input dataset folder (class subfolders)")
+    ap.add_argument("--out", required=True, help="Output folder (balanced + dedup)")
+    ap.add_argument("--seed", type=int, default=42)
+
+    ap.add_argument("--dedup_threshold", type=int, default=6, help="pHash hamming threshold (4 strict, 6 normal, 8 loose)")
+    ap.add_argument("--balance_mode", choices=["min", "max"], default="min", help="min => smallest class size, max => largest class size")
+    ap.add_argument("--target_per_class", type=int, default=0, help="If >0, force exact target. Else uses balance_mode.")
+    ap.add_argument("--copies_cap_per_image", type=int, default=10, help="Max augmented copies per original image")
+
+    args = ap.parse_args()
+    random.seed(args.seed)
+
+    input_dir = Path(args.input).expanduser().resolve()
+    out_dir = Path(args.out).expanduser().resolve()
+
+    if not input_dir.exists():
+        raise SystemExit(f"ERROR: Input folder not found: {input_dir}")
+
+    # 0) copy input -> out (safe)
+    copy_input_to_out(input_dir, out_dir)
+
+    report = {
+        "input": str(input_dir),
+        "out": str(out_dir),
+        "before_counts": count_per_class(out_dir),
+        "dedup": None,
+        "balance": None,
+        "after_counts": None,
+    }
+
+    # 1) remove duplicates
+    dedup_stats = dedup_dataset(out_dir, args.dedup_threshold)
+    report["dedup"] = {"threshold": args.dedup_threshold, "per_class": dedup_stats}
+
+    # 2) balance
+    counts = count_per_class(out_dir)
+    if args.target_per_class and args.target_per_class > 0:
+        target = args.target_per_class
+        mode = "manual"
+    else:
+        target = min(counts.values()) if args.balance_mode == "min" else max(counts.values())
+        mode = args.balance_mode
+
+    bal_stats = balance_dataset(out_dir, target_per_class=target, trim_extra=True, copies_cap_per_image=args.copies_cap_per_image)
+    bal_stats["mode"] = mode
+    report["balance"] = bal_stats
+
+    report["after_counts"] = count_per_class(out_dir)
+
+    # save report
+    with open(out_dir / "report.json", "w", encoding="utf-8") as f:
+        json.dump(report, f, indent=2)
+
+    print("\n✅ DONE")
+    print("Output:", out_dir)
+    print("Before:", report["before_counts"])
+    print("After :", report["after_counts"])
+    print("Report:", out_dir / "report.json")
+
+if __name__ == "__main__":
+    main()
