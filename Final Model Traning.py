@@ -9,8 +9,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
-# Configuration for paths
-# For VS Code, create a folder named 'data' in your project directory
+
 PDF_FOLDER_PATH = "./data/wheat_disease_data" 
 
 print("✅ Part 1: Libraries and Environment Loaded.")
