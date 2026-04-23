@@ -1,0 +1,16 @@
+# First cell - Restart kernel and install
+import IPython
+IPython.Application.instance().kernel.do_shutdown(True)
+
+# 1. Uninstall conflicts
+!pip uninstall -y numpy pandas scipy bitsandbytes accelerate transformers docling
+
+# 2. Install AI Backend (Latest versions for Qwen)
+!pip install "bitsandbytes>=0.43.1" "accelerate>=0.30.0" "transformers>=4.40.0"
+
+# 3. Install PDF & RAG Backend (Locked versions for Docling)
+# We use --no-deps on docling to prevent it from breaking the AI backend
+!pip install "numpy<2.0" "docling" "docling-core" "langchain" "langchain-community" "langchain-huggingface" "faiss-cpu" "sentence-transformers"
+
+# 4. Patch compatibility
+!pip install "pandas<2.2.0" "scipy<1.13.0"
