@@ -216,3 +216,33 @@ if vector_db:
 else:
     print("\n❌ System Failed: No data found.")
 
+# ==========================================
+# INTERACTIVE CHAT LOOP
+# ==========================================
+print(f"🤖 AgriBot is Live! (Type 'exit' to stop)")
+print("-" * 40)
+
+while True:
+    # 1. Get input
+    user_input = input("\n📝 Ask a question (Urdu): ")
+    
+    # 2. Check exit
+    if user_input.lower() in ['exit', 'quit', 'stop']:
+        print("👋 Chatbot stopped.")
+        break
+    
+    if not user_input.strip():
+        continue
+
+    # 3. Generate Answer
+    print("⏳ Thinking...")
+    try:
+        if 'vector_db' in globals() and vector_db:
+            response = ask_bot(user_input, vector_db, llm_pipe, llm_tokenizer)
+            print(f"\n💡 Answer:\n{response}")
+            print("-" * 40)
+        else:
+            print("❌ Error: System not loaded.")
+            break
+    except Exception as e:
+        print(f"❌ Error: {e}")
