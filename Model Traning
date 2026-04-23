@@ -49,3 +49,170 @@ subprocess.check_call([sys.executable, "-m", "pip", "install",
 
 print("✅ Installation Complete.")
 print("⚠️ IF YOU SEE AN ERROR BELOW, RESTART SESSION AND RUN CELL 2 DIRECTLY.")
+
+
+import os
+import sys
+import torch
+import gc
+
+# --- Fix Paths for Kaggle ---
+sys.path.append("/usr/local/lib/python3.10/site-packages")
+
+# --- Memory Optimization Settings ---
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+
+try:
+    import bitsandbytes as bnb
+    from docling.document_converter import DocumentConverter
+    from langchain.text_splitter import RecursiveCharacterTextSplitter
+    from langchain_huggingface import HuggingFaceEmbeddings
+    from langchain_community.vectorstores import FAISS
+    from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig, pipeline
+    print("✅ All libraries loaded successfully.")
+except ImportError as e:
+    print(f"❌ Load Error: {e}")
+    sys.exit()
+
+# ==========================================
+# 1. CONFIGURATION
+# ==========================================
+PDF_FOLDER_PATH = "/kaggle/input/chatbot-dataset"  
+EMBEDDING_MODEL = "intfloat/multilingual-e5-base"
+LLM_MODEL = "large-traversaal/Alif-1.0-8B-Instruct"
+
+# ==========================================
+# 2. PIPELINE FUNCTIONS
+# ==========================================
+def process_pdfs_to_db():
+    print("\n--- 1. PROCESSING DATA ---")
+    if not os.path.exists(PDF_FOLDER_PATH):
+        print(f"⚠️ Folder {PDF_FOLDER_PATH} not found. Creating dummy data.")
+        os.makedirs("test_data", exist_ok=True)
+        with open("test_data/rust.pdf", "w") as f: f.write("Yellow rust is a fungal disease.")
+        search_path = "test_data"
+    else:
+        search_path = PDF_FOLDER_PATH
+
+    # --- MEMORY CLEANUP ---
+    torch.cuda.empty_cache()
+    gc.collect()
+
+    converter = DocumentConverter()
+    pdf_files = [f for f in os.listdir(search_path) if f.endswith('.pdf')]
+    
+    if not pdf_files:
+        print("❌ No PDFs found.")
+        return None
+        
+    chunks = []
+    print(f"📄 Found {len(pdf_files)} PDFs. Extracting...")
+    
+    splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=100)
+    
+    for f in pdf_files:
+        try:
+            res = converter.convert(os.path.join(search_path, f))
+            text = res.document.export_to_markdown()
+            file_chunks = splitter.create_documents([text], metadatas=[{"source": f}])
+            chunks.extend(file_chunks)
+            print(f"   ✅ Parsed: {f}")
+        except Exception as e:
+            print(f"   ⚠️ Error reading {f}: {e}")
+
+    if not chunks: return None
+
+    print("🗄️ Creating Vector Index on CPU (Saving GPU for Alif)...")
+    # 👉 Using CPU for Embeddings to save VRAM
+    embeddings = HuggingFaceEmbeddings(
+        model_name=EMBEDDING_MODEL,
+        model_kwargs={'device': 'cpu'} 
+    )
+    db = FAISS.from_documents(chunks, embeddings)
+    print("✅ Knowledge Base Ready!")
+    return db
+
+def load_llm():
+    print(f"\n--- 2. LOADING MODEL: {LLM_MODEL} ---")
+    
+    # --- MEMORY CLEANUP ---
+    torch.cuda.empty_cache()
+    gc.collect()
+    
+    quantization_config = BitsAndBytesConfig(
+        load_in_4bit=True,
+        bnb_4bit_compute_dtype=torch.float16,
+        bnb_4bit_use_double_quant=True,
+        bnb_4bit_quant_type="nf4"
+    )
+
+    tokenizer = AutoTokenizer.from_pretrained(LLM_MODEL)
+    model = AutoModelForCausalLM.from_pretrained(
+        LLM_MODEL,
+        quantization_config=quantization_config,
+        device_map="auto"
+    )
+
+    pipe = pipeline(
+        "text-generation", 
+        model=model, 
+        tokenizer=tokenizer, 
+        max_new_tokens=256, 
+        temperature=0.3,
+        do_sample=True
+    )
+    print("✅ Model Loaded!")
+    return pipe, tokenizer
+
+# --- CORRECTED ASK_BOT FUNCTION ---
+def ask_bot(question, db, pipe, tokenizer):
+    if db is None: return "Error: Database is empty."
+    
+    # 1. Retrieve Context
+    docs = db.as_retriever(search_kwargs={"k": 2}).invoke(question)
+    context = "\n\n".join([d.page_content for d in docs])
+    
+    # 2. Strict Prompt
+    prompt = f"""### Instruction:
+You are an agricultural expert.
+CONTEXT: {context}
+
+INSTRUCTIONS: 
+1. Answer ONLY based on the CONTEXT provided above.
+2. Do NOT use your own outside knowledge.
+3. Answer ONLY in URDU.
+4. Keep the answer VERY SHORT and CONCISE (Max 3-4 lines).
+5. Use Bullet Points (-) for clarity.
+6. Do not include unnecessary details.
+
+
+
+### User Question:
+{question}
+
+### Response:
+"""
+
+    # 3. Generate Answer
+    # return_full_text=False hides the prompt from the output
+    out = pipe(prompt, max_new_tokens=200, return_full_text=False)
+    
+    generated_text = out[0]["generated_text"]
+    
+    # 4. Clean up
+    if "### Response:" in generated_text:
+        return generated_text.split("### Response:")[-1].strip()
+        
+    return generated_text.strip()
+
+# ==========================================
+# 3. INITIALIZE SYSTEM
+# ==========================================
+vector_db = process_pdfs_to_db()
+
+if vector_db:
+    llm_pipe, llm_tokenizer = load_llm()
+    print("\n🎉 SYSTEM READY with Alif-1.0!")
+else:
+    print("\n❌ System Failed: No data found.")
+
